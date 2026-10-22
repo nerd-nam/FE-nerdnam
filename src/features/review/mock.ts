@@ -33,6 +33,7 @@ export type Episode = {
 
 export type ReviewData = {
   projectId: string;
+  projectStatus: "review" | "confirmed"; // 확정이면 S05 읽기 모드 (기획서 v1.17)
   title: string;
   meta: string; // "OO커머스 · 2024.05 – 2024.09"
   rawText: string;
@@ -44,14 +45,17 @@ const project = MOCK_PROJECTS.find((item) => item.id === "p_102")!;
 const rawText = project.rawText;
 
 // 원문에서 phrase 가 있는 위치를 [시작, 끝) 으로 돌려준다. 실제로는 AI 가 source_spans 로 준다.
-function span(phrase: string): [number, number] {
-  const start = rawText.indexOf(phrase);
+function spanIn(text: string, phrase: string): [number, number] {
+  const start = text.indexOf(phrase);
   if (start < 0) throw new Error(`원문에 없는 문장: ${phrase}`);
   return [start, start + phrase.length];
 }
+const span = (phrase: string) => spanIn(rawText, phrase);
 
-export const MOCK_REVIEW: ReviewData = {
+// p_102: 검토 중 (S04 → S05 검토 흐름)
+const MOCK_REVIEW: ReviewData = {
   projectId: "p_102",
+  projectStatus: "review",
   title: project.title,
   meta: "OO커머스 · 2024.05 – 2024.09",
   rawText,
@@ -133,3 +137,42 @@ export const MOCK_REVIEW: ReviewData = {
     },
   ],
 };
+
+// p_103: 확정 (S05 읽기 모드)
+const confirmedProject = MOCK_PROJECTS.find((item) => item.id === "p_103")!;
+const MOCK_CONFIRMED: ReviewData = {
+  projectId: "p_103",
+  projectStatus: "confirmed",
+  title: confirmedProject.title,
+  meta: "OO커머스 · 2023.09 – 2023.12",
+  rawText: confirmedProject.rawText,
+  answers: [],
+  episodes: [
+    {
+      id: "e_301",
+      title: "정산 배치 쿼리 개선",
+      role: "백엔드 개발",
+      skills: ["JPA", "MySQL"],
+      status: "confirmed",
+      currentVersion: 1,
+      versions: {
+        1: {
+          problem: "정산 배치가 마감 시간을 넘기는 일이 잦았다.",
+          solution: "실행 계획을 분석해 인덱스를 다시 설계했다.",
+          result: "[배치 처리 시간 변화]",
+          metrics: [],
+        },
+      },
+      sourceSpans: [
+        spanIn(confirmedProject.rawText, "정산 배치가 마감 시간을 넘기는 일이 잦았다."),
+        spanIn(confirmedProject.rawText, "실행 계획을 분석해 인덱스를 다시 설계했다."),
+      ],
+      unverified: [],
+    },
+  ],
+};
+
+// 프로젝트 id 로 S05 데이터 찾기. 실제로는 서버 조회 (C-02 S05)
+export function findReview(projectId: string): ReviewData | undefined {
+  return [MOCK_REVIEW, MOCK_CONFIRMED].find((data) => data.projectId === projectId);
+}

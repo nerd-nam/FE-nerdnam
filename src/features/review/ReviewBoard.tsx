@@ -11,6 +11,7 @@ import { Textarea } from "@/shared/ui/Field";
 import { Icon } from "@/shared/ui/Icon";
 import { Rating } from "@/shared/ui/Rating";
 import { cx } from "@/shared/ui/cx";
+import { ReregisterButton } from "@/features/library/ReregisterButton";
 import { EpisodeCard } from "./EpisodeCard";
 import { LeaveGuard } from "@/features/onboarding/LeaveGuard";
 import type { Episode, ReviewData } from "./mock";
@@ -21,7 +22,11 @@ type ReviewBoardProps = {
   rawPanel: ReactNode; // 서버 컴포넌트(RawTextPanel)를 받아 그대로 놓는다
 };
 
+// 확정한 프로젝트면 읽기 모드 (기획서 v1.17 F2 "확정한 프로젝트 보기")
+// - 확정한 사례만, 결정·버전·질문·다시 나누기·사례 추가 없음, 나갈 때 경고 없음
+// - 진행률 자리에 "수정"(재등록 안내), 사례 생성 평가는 그대로
 export function ReviewBoard({ data, rawPanel }: ReviewBoardProps) {
+  const readOnly = data.projectStatus === "confirmed";
   const [episodes, setEpisodes] = useState(data.episodes);
   const [openId, setOpenId] = useState<string | null>(data.episodes[0]?.id ?? null);
   const [viewing, setViewing] = useState<Record<string, number>>(() =>
@@ -70,32 +75,40 @@ export function ReviewBoard({ data, rawPanel }: ReviewBoardProps) {
   return (
     <>
       {/* 확정 전에 S04·온보딩 밖으로 나가면 경고 (기획서 v1.14 검토 결과 유지 규칙) */}
-      <LeaveGuard active mode="leave-review" />
+      <LeaveGuard active={!readOnly} mode="leave-review" />
       <div className={styles.head}>
         <div className={styles.headText}>
           <div className={styles.headMeta}>
-            <Badge tone="warn">검토 중</Badge>
+            {readOnly ? <Badge tone="ok">확정</Badge> : <Badge tone="warn">검토 중</Badge>}
             <span>{data.meta}</span>
           </div>
           <h1 className={styles.title}>{data.title}</h1>
-          <p className={styles.desc}>
-            AI가 이 프로젝트에서 <strong>사례 {total}개</strong>를 찾았어요. 사례마다 확정하거나 제외해 주세요. 공고와는 사례 단위로 맞춰
-            봐요.
-          </p>
+          {readOnly ? (
+            <p className={styles.desc}>확정한 사례가 공고 매칭의 근거로 쓰이고 있어요. 고치려면 수정을 눌러 다시 등록해 주세요.</p>
+          ) : (
+            <p className={styles.desc}>
+              AI가 이 프로젝트에서 <strong>사례 {total}개</strong>를 찾았어요. 사례마다 확정하거나 제외해 주세요. 공고와는 사례 단위로
+              맞춰 봐요.
+            </p>
+          )}
         </div>
-        <div className={styles.progress}>
-          <span>
-            <strong>
-              {doneCount} / {total}
-            </strong>{" "}
-            결정됨
-          </span>
-          <div className={styles.bar} style={{ gridTemplateColumns: `repeat(${total}, minmax(0, 1fr))` }} aria-hidden="true">
-            {episodes.map((ep) => (
-              <span key={ep.id} className={cx(ep.status !== "review" && styles.barDone)} />
-            ))}
+        {readOnly ? (
+          <ReregisterButton projectId={data.projectId} title={data.title} />
+        ) : (
+          <div className={styles.progress}>
+            <span>
+              <strong>
+                {doneCount} / {total}
+              </strong>{" "}
+              결정됨
+            </span>
+            <div className={styles.bar} style={{ gridTemplateColumns: `repeat(${total}, minmax(0, 1fr))` }} aria-hidden="true">
+              {episodes.map((ep) => (
+                <span key={ep.id} className={cx(ep.status !== "review" && styles.barDone)} />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className={styles.split}>
@@ -106,6 +119,7 @@ export function ReviewBoard({ data, rawPanel }: ReviewBoardProps) {
             <EpisodeCard
               key={ep.id}
               index={index}
+              readOnly={readOnly}
               episode={ep}
               isOpen={openId === ep.id}
               viewingVersion={viewing[ep.id]}
@@ -124,55 +138,59 @@ export function ReviewBoard({ data, rawPanel }: ReviewBoardProps) {
             />
           ))}
           {/* 사례 직접 추가는 ④ 단계에서 붙인다 */}
-          <Button block className={styles.addEpisode}>
-            <Icon name="plus" size="sm" />
-            AI가 놓친 사례 직접 추가
-          </Button>
+          {!readOnly && (
+            <Button block className={styles.addEpisode}>
+              <Icon name="plus" size="sm" />
+              AI가 놓친 사례 직접 추가
+            </Button>
+          )}
         </section>
       </div>
 
-      <Card aria-labelledby="feedback-title">
-        <div className={styles.bottom}>
-          <div className={styles.bottomField}>
-            <label id="feedback-title" htmlFor="feedback" className={styles.feedbackLabel}>
-              사례를 나눈 방식이 마음에 들지 않나요?
-            </label>
-            <Textarea
-              id="feedback"
-              rows={2}
-              placeholder="예: 부하 테스트 이야기는 사례 1에 합쳐 줘"
-              value={feedback}
-              onChange={(event) => setFeedback(event.target.value)}
-              aria-describedby="feedback-help"
-            />
-            <p id="feedback-help" className={styles.help}>
-              어떻게 나누면 좋을지 적어 주세요. 적은 내용을 반영해 사례를 새로 만들어요. 원문에 없는 사실은 추가되지 않아요.
+      {!readOnly && (
+        <Card aria-labelledby="feedback-title">
+          <div className={styles.bottom}>
+            <div className={styles.bottomField}>
+              <label id="feedback-title" htmlFor="feedback" className={styles.feedbackLabel}>
+                사례를 나눈 방식이 마음에 들지 않나요?
+              </label>
+              <Textarea
+                id="feedback"
+                rows={2}
+                placeholder="예: 부하 테스트 이야기는 사례 1에 합쳐 줘"
+                value={feedback}
+                onChange={(event) => setFeedback(event.target.value)}
+                aria-describedby="feedback-help"
+              />
+              <p id="feedback-help" className={styles.help}>
+                어떻게 나누면 좋을지 적어 주세요. 적은 내용을 반영해 사례를 새로 만들어요. 원문에 없는 사실은 추가되지 않아요.
+              </p>
+            </div>
+            <div className={styles.bottomActions}>
+              {/* 다시 나누기는 피드백이 있어야 누를 수 있다 (기획서 v1.12 F2). 실제 요청은 ④ 단계에서 붙인다 */}
+              <Button disabled={!feedback.trim()}>
+                <Icon name="refresh" size="sm" />
+                다시 나누기
+              </Button>
+              {canConfirmProject ? (
+                // data-allow-leave: 프로젝트 확정은 떠나기 경고를 띄우지 않는다
+              <ButtonLink variant="primary" href={routes.library} data-allow-leave>
+                  <Icon name="check" size="sm" bold />
+                  프로젝트 확정
+                </ButtonLink>
+              ) : (
+                <Button variant="primary" disabled>
+                  <Icon name="check" size="sm" bold />
+                  프로젝트 확정
+                </Button>
+              )}
+            </div>
+            <p className={styles.footNote} aria-live="polite">
+              {footNote}
             </p>
           </div>
-          <div className={styles.bottomActions}>
-            {/* 다시 나누기는 피드백이 있어야 누를 수 있다 (기획서 v1.12 F2). 실제 요청은 ④ 단계에서 붙인다 */}
-            <Button disabled={!feedback.trim()}>
-              <Icon name="refresh" size="sm" />
-              다시 나누기
-            </Button>
-            {canConfirmProject ? (
-              // data-allow-leave: 프로젝트 확정은 떠나기 경고를 띄우지 않는다
-            <ButtonLink variant="primary" href={routes.library} data-allow-leave>
-                <Icon name="check" size="sm" bold />
-                프로젝트 확정
-              </ButtonLink>
-            ) : (
-              <Button variant="primary" disabled>
-                <Icon name="check" size="sm" bold />
-                프로젝트 확정
-              </Button>
-            )}
-          </div>
-          <p className={styles.footNote} aria-live="polite">
-            {footNote}
-          </p>
-        </div>
-      </Card>
+        </Card>
+      )}
 
       {/* 사례 생성 평가: 프로젝트마다 한 번, 언제든 바꿀 수 있음 (기획서 v1.12) */}
       <Card size="sm" aria-label="사례 생성 평가">

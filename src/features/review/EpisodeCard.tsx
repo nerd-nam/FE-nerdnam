@@ -16,6 +16,7 @@ import styles from "./Review.module.css";
 
 type EpisodeCardProps = {
   index: number; // 사례 번호 (0부터)
+  readOnly?: boolean; // 읽기 모드: 확정한 프로젝트 보기 (기획서 v1.17). 결정·버전·질문·버튼 줄 없음
   episode: Episode;
   isOpen: boolean;
   viewingVersion: number; // 지금 보고 있는 버전 (현재 버전이 아닐 수 있음)
@@ -54,7 +55,15 @@ export function EpisodeCard(props: EpisodeCardProps) {
 }
 
 // 제목 오른쪽 상태 표시 + "다시 검토하기"
-function StatusBadge({ episode, pending, onReopen }: EpisodeCardProps) {
+function StatusBadge({ episode, pending, onReopen, readOnly }: EpisodeCardProps) {
+  if (readOnly) {
+    return (
+      <Badge tone="ok">
+        <Icon name="check" size="sm" bold />
+        확정
+      </Badge>
+    );
+  }
   if (episode.status === "confirmed" || episode.status === "excluded") {
     return (
       <span className={styles.epStatus}>
@@ -82,7 +91,7 @@ function StatusBadge({ episode, pending, onReopen }: EpisodeCardProps) {
   );
 }
 
-function EpisodeBody({ episode, viewingVersion, pending, bodyId, ...on }: EpisodeCardProps & { bodyId: string }) {
+function EpisodeBody({ episode, viewingVersion, pending, bodyId, readOnly, ...on }: EpisodeCardProps & { bodyId: string }) {
   const versionNumbers = Object.keys(episode.versions)
     .map(Number)
     .sort((a, b) => a - b);
@@ -90,7 +99,7 @@ function EpisodeBody({ episode, viewingVersion, pending, bodyId, ...on }: Episod
   const shown = episode.versions[viewingVersion];
   const previous = episode.versions[viewingVersion - 1];
   const resultChanged = previous && previous.result !== shown.result;
-  const isReviewing = episode.status === "review";
+  const isReviewing = !readOnly && episode.status === "review";
 
   return (
     <div id={bodyId} className={styles.epBody}>
@@ -101,7 +110,7 @@ function EpisodeBody({ episode, viewingVersion, pending, bodyId, ...on }: Episod
             <Tag key={skill}>{skill}</Tag>
           ))}
         </div>
-        {versionNumbers.length > 1 && (
+        {!readOnly && versionNumbers.length > 1 && (
           <Segmented
             label="버전"
             options={versionNumbers.map((v) => ({ value: String(v), label: v === latest ? `v${v} · 최신` : `v${v}` }))}
@@ -169,27 +178,29 @@ function EpisodeBody({ episode, viewingVersion, pending, bodyId, ...on }: Episod
       {isReviewing &&
         pending.map((question) => <QuestionBox key={question.id} question={question} onResolve={(answer) => on.onResolve(question.id, answer)} />)}
 
-      <div className={styles.epFoot}>
-        {isReviewing ? (
-          <Button variant="ghost" className={styles.dangerText} onClick={on.onExclude}>
-            이 사례 제외
-          </Button>
-        ) : (
-          <span />
-        )}
-        <div className={styles.row}>
-          {/* 수정 요청·직접 편집은 서버(AI) 연결이 필요해 ④ 단계에서 붙인다 */}
-          <Button>
-            <Icon name="refresh" size="sm" />이 사례 수정 요청
-          </Button>
-          <Button>직접 편집</Button>
-          {isReviewing && (
-            <Button variant="primary" disabled={pending.length > 0} onClick={on.onConfirm}>
-              <Icon name="check" size="sm" bold />이 사례 확정
+      {!readOnly && (
+        <div className={styles.epFoot}>
+          {isReviewing ? (
+            <Button variant="ghost" className={styles.dangerText} onClick={on.onExclude}>
+              이 사례 제외
             </Button>
+          ) : (
+            <span />
           )}
+          <div className={styles.row}>
+            {/* 수정 요청·직접 편집은 서버(AI) 연결이 필요해 ④ 단계에서 붙인다 */}
+            <Button>
+              <Icon name="refresh" size="sm" />이 사례 수정 요청
+            </Button>
+            <Button>직접 편집</Button>
+            {isReviewing && (
+              <Button variant="primary" disabled={pending.length > 0} onClick={on.onConfirm}>
+                <Icon name="check" size="sm" bold />이 사례 확정
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
       {isReviewing && pending.length > 0 && <p className={styles.hint}>확인 필요 항목을 처리하면 확정할 수 있어요.</p>}
     </div>
   );

@@ -19,7 +19,7 @@ export const MOCK_LIBRARY_PROJECTS: LibraryProject[] = [
   {
     id: "p_102",
     title: "결제 승인 API 성능 개선",
-    status: "confirmed",
+    status: "review", // S05 임시 데이터와 맞춤 (검토 중)
     meta: "OO커머스 · 2024.05 – 2024.09",
     skills: ["Spring Boot", "Redis", "Kafka"],
     episodes: [
