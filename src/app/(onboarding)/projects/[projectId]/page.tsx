@@ -15,7 +15,7 @@ import { Stepper } from "@/shared/ui/Stepper";
 
 export const metadata: Metadata = { title: "프로젝트 입력" };
 
-// S04 프로젝트 입력 · 작업: FE-07 (지금: ① 모양 · ② 나누기 완료, ③ 움직임 전)
+// S04 프로젝트 입력 · 작업: FE-07 (지금: ① 모양 · ② 나누기 · ③ 움직임 완료, ④ 저장 전)
 // 주소: /projects/new (새 프로젝트) 또는 /projects/p_102 (저장된 프로젝트)
 // 데이터는 아직 임시 데이터(features/project/mock.ts)를 쓴다.
 export default function ProjectPage({ params }: PageProps<"/projects/[projectId]">) {
@@ -48,7 +48,10 @@ function ProjectContent({ projectId }: { projectId: string }) {
       <ProjectTabs projects={MOCK_PROJECTS} currentId={projectId} />
 
       <div className={styles.split}>
-        <ProjectForm project={project} affiliations={MOCK_AFFILIATIONS} mySkills={MOCK_MY_SKILLS} />
+        {/* key: 프로젝트가 바뀌면 양식을 새로 만들라는 표시.
+            지금 설정(next.config.ts 의 cacheComponents)에서는 Next.js 가 주소마다 화면을 따로 보관해서 key 없이도 섞이지 않는다.
+            하지만 이 설정을 끄면 React 가 같은 양식을 다시 써서 이전 프로젝트에서 고른 기술·입력한 글이 남으므로, 안전장치로 둔다 */}
+        <ProjectForm key={project.id} project={project} affiliations={MOCK_AFFILIATIONS} mySkills={MOCK_MY_SKILLS} />
         <WritingGuide />
       </div>
 
