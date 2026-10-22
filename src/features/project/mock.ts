@@ -58,6 +58,17 @@ export const MOCK_PROJECTS: Project[] = [
     demoUrl: "",
     status: "confirmed",
   },
+  {
+    id: "p_104",
+    title: "[세 번째 프로젝트 제목]",
+    period: { start: "", end: "" },
+    affiliation: "",
+    skills: [],
+    rawText: "",
+    repoUrl: "",
+    demoUrl: "",
+    status: "draft",
+  },
 ];
 
 // 새 프로젝트(/projects/new)의 빈 양식

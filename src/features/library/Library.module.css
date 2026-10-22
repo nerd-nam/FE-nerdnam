@@ -1,0 +1,46 @@
+/* S06 내 경험 라이브러리. 원본: design/library.html, style.css 의 .stat, .grid-4, .split, .meter, .card--dashed */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+.stat dt { font-size: 13px; color: var(--subtle); }
+.stat dd { margin: 6px 0 0; font-size: 26px; font-weight: 700; }
+.statSub { font-size: 16px; font-weight: 500; color: var(--subtle); }
+
+.split { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+.main { flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.side { flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+
+.sectionTitle { font-size: 17px; font-weight: 700; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.between { justify-content: space-between; align-items: flex-start; }
+.stack { display: flex; flex-direction: column; gap: 6px; }
+.meta { font-size: 13px; color: var(--subtle); }
+.projectTitle { font-size: 18px; font-weight: 700; margin: 0; }
+
+/* 확정한 사례 한 줄씩 */
+.episodes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.55; }
+.episode { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; padding: 12px 14px; border-radius: 10px; background: var(--bg); }
+.episodeNum { font-size: 12px; font-weight: 700; color: var(--accent); }
+.episodeSummary { color: var(--muted); }
+
+/* 초안·검토 중 프로젝트: 점선 카드, 가로 배치 */
+.pending { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px; }
+
+/* 오른쪽 경력·기술 요약 */
+.sideHead { display: flex; justify-content: space-between; align-items: center; }
+.sideTitle { font-size: 16px; font-weight: 700; }
+.edit { font-size: 13px; font-weight: 600; }
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.careerItem { display: flex; flex-direction: column; gap: 2px; }
+.careerItem + .careerItem { padding-top: 14px; border-top: 1px solid var(--line); }
+.desc { font-size: 14px; color: var(--muted); }
+.skillList { gap: 10px; font-size: 14px; }
+.skillItem { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.skillName { font-weight: 600; }
+.level { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--subtle); }
+.meter { display: flex; gap: 3px; }
+.meter span { width: 14px; height: 6px; border-radius: 3px; background: var(--track); }
+.meter .on { background: var(--accent); }
+
+@media (max-width: 720px) {
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
