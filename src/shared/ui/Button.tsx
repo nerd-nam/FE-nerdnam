@@ -12,7 +12,8 @@ type StyleProps = {
   block?: boolean; // 가로 폭을 꽉 채움
 };
 
-function buttonClass({ variant = "default", size = "md", block }: StyleProps, className?: string) {
+// 버튼 모양 클래스. <button>·<a> 가 아닌 태그를 버튼처럼 보이게 할 때도 쓴다 (예: 파일 선택 <label>)
+export function buttonClass({ variant = "default", size = "md", block }: StyleProps, className?: string) {
   return cx(
     styles.btn,
     variant !== "default" && styles[variant],

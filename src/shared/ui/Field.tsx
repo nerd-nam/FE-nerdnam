@@ -58,6 +58,11 @@ export function Textarea({ invalid, className, ...rest }: InvalidProp & Componen
   return <textarea aria-invalid={invalid || undefined} className={cx(styles.input, styles.textarea, className)} {...rest} />;
 }
 
+// 선택 상자. 모양은 입력칸과 같다 (디자인에서 <select class="input">)
+export function Select({ invalid, className, ...rest }: InvalidProp & ComponentProps<"select">) {
+  return <select aria-invalid={invalid || undefined} className={cx(styles.input, className)} {...rest} />;
+}
+
 // 체크박스 + 글자. 글자를 눌러도 체크되도록 <label> 로 감싼다.
 export function Checkbox({ children, className, ...rest }: { children: ReactNode } & Omit<ComponentProps<"input">, "type">) {
   return (
