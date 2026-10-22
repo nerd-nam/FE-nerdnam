@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { Icon } from "@/shared/ui/Icon";
-import { NEW_JD_ID, routes } from "@/shared/routes";
+import { routes } from "@/shared/routes";
 import styles from "./Layout.module.css";
 
 const MENU = [
   { area: "library", label: "내 경험", href: routes.library },
-  { area: "apply", label: "지원 준비", href: routes.jd(NEW_JD_ID) },
+  { area: "apply", label: "지원 준비", href: routes.applyList },
 ] as const;
 
 type AppArea = (typeof MENU)[number]["area"];

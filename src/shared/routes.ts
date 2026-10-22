@@ -7,6 +7,7 @@ export const routes = {
   project: (id: string) => `/projects/${id}`, // S04
   review: (id: string) => `/projects/${id}/review`, // S05
   library: "/library", // S06
+  applyList: "/apply", // S10 공고 목록 (목록만 MVP, 기획서 v1.11)
   jd: (id: string) => `/apply/${id}/jd`, // S07
   report: (id: string) => `/apply/${id}/report`, // S08
   guide: (id: string, tab: GuideTab) => `/apply/${id}/guide/${tab}`, // S09
