@@ -12,6 +12,7 @@ import { Icon } from "@/shared/ui/Icon";
 import { Rating } from "@/shared/ui/Rating";
 import { cx } from "@/shared/ui/cx";
 import { EpisodeCard } from "./EpisodeCard";
+import { LeaveGuard } from "./LeaveGuard";
 import type { Episode, ReviewData } from "./mock";
 import styles from "./Review.module.css";
 
@@ -68,6 +69,8 @@ export function ReviewBoard({ data, rawPanel }: ReviewBoardProps) {
 
   return (
     <>
+      {/* 확정 전에 S04·온보딩 밖으로 나가면 경고 (기획서 v1.14 검토 결과 유지 규칙) */}
+      <LeaveGuard active />
       <div className={styles.head}>
         <div className={styles.headText}>
           <div className={styles.headMeta}>
@@ -153,7 +156,8 @@ export function ReviewBoard({ data, rawPanel }: ReviewBoardProps) {
               다시 나누기
             </Button>
             {canConfirmProject ? (
-              <ButtonLink variant="primary" href={routes.library}>
+              // data-allow-leave: 프로젝트 확정은 떠나기 경고를 띄우지 않는다
+            <ButtonLink variant="primary" href={routes.library} data-allow-leave>
                 <Icon name="check" size="sm" bold />
                 프로젝트 확정
               </ButtonLink>
