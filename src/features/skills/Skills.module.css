@@ -1,0 +1,35 @@
+/* S02 기술스택 화면. 원본: design/skills.html, style.css 의 .row, .level*, .level-def, .grid-4, .input-wrap */
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.cardTitle { font-size: 17px; font-weight: 700; }
+.count { color: var(--accent); }
+
+/* 검색칸 (돋보기 아이콘이 안쪽 왼쪽) */
+.search { position: relative; }
+.search > svg { position: absolute; left: 14px; top: 13px; color: var(--subtle); }
+.search > input { padding-left: 42px; }
+
+.groupLabel { font-size: 13px; font-weight: 600; color: var(--subtle); }
+.chipGroup { display: flex; flex-direction: column; gap: 10px; }
+.empty { font-size: 14px; color: var(--subtle); }
+
+/* 숙련도 기준 4칸 */
+.levelDefs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.levelDef { padding: 12px 14px; background: var(--bg); border-radius: var(--radius); }
+.levelDef dt { font-size: 13px; font-weight: 700; }
+.levelDef dd { margin: 4px 0 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
+
+/* 숙련도 막대 */
+.level { display: flex; align-items: center; gap: 10px; }
+.bars { display: flex; }
+.barBtn { width: 28px; height: 44px; padding: 0; border: 0; background: transparent; display: grid; place-items: center; cursor: pointer; }
+.bar { display: block; width: 22px; height: 8px; border-radius: 4px; background: var(--track); }
+.barOn .bar { background: var(--accent); }
+.levelName { font-size: 14px; color: var(--muted); }
+
+.table { min-width: 560px; }
+.name { font-weight: 600; }
+.muted { color: var(--muted); }
+
+@media (max-width: 720px) {
+  .levelDefs { grid-template-columns: minmax(0, 1fr); }
+}

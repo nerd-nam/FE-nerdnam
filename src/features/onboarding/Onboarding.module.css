@@ -1,0 +1,4 @@
+/* 온보딩 화면 공통 (원본: style.css .actions) */
+.actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+/* 화살표를 왼쪽으로 (검토로 "돌아가기") */
+.flip { transform: scaleX(-1); }
