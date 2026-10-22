@@ -1,0 +1,22 @@
+/* 원본: style.css 입력 (.label, .input, .check), 양식 검증 (.req, .input--bad, .err), 도움말 (.help) */
+.label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.hint { font-weight: 400; color: var(--subtle); }
+.req { color: var(--bad); margin-left: 2px; }
+
+.input {
+  width: 100%; min-height: var(--control-h); padding: 10px 14px;
+  border: 1px solid var(--line-strong); border-radius: var(--radius);
+  font: inherit; font-size: 15px; color: var(--ink); background: #fff;
+}
+.input::placeholder { color: #8A909C; }
+.input:disabled { background: var(--surface-muted); color: var(--subtle); }
+.input[aria-invalid="true"] { border-color: var(--bad); background: #FFFBFA; }
+.textarea { line-height: 1.7; resize: vertical; }
+
+.err { margin: 6px 0 0; font-size: 13px; line-height: 1.5; color: var(--bad); }
+
+.help { margin: 8px 0 0; display: flex; gap: 6px; align-items: flex-start; font-size: 13px; line-height: 1.5; color: var(--subtle); }
+.help svg { width: 16px; height: 16px; margin-top: 1px; }
+
+.check { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.5; cursor: pointer; }
+.check input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); flex: none; }

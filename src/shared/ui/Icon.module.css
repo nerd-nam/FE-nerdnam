@@ -1,0 +1,13 @@
+/* 원본: style.css .i */
+.icon {
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.sm { width: 14px; height: 14px; }
+.md { width: 18px; height: 18px; }
+.lg { width: 22px; height: 22px; }
+.bold { stroke-width: 2.8; }

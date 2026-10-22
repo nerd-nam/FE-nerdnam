@@ -1,0 +1,14 @@
+/* 원본: style.css 대화상자 (.modal, .modal__box)
+   브라우저 기본 <dialog> 를 쓰므로 어두운 배경은 ::backdrop 으로 칠한다. */
+.dialog {
+  width: calc(100% - 32px); max-width: 440px; padding: 0; border: 0;
+  border-radius: var(--radius-lg); background: var(--surface); color: var(--ink);
+  box-shadow: 0 12px 40px rgba(21, 23, 28, 0.2);
+}
+.dialog::backdrop { background: rgba(21, 23, 28, 0.45); }
+/* 여백은 안쪽 상자에 준다. <dialog> 자체에 여백이 있으면 여백을 눌러도 "바깥 클릭"으로 판단되기 때문 */
+.box { padding: 28px; display: flex; flex-direction: column; gap: 14px; }
+
+.title { font-size: 17px; font-weight: 700; }
+.body { font-size: 14px; line-height: 1.6; color: var(--muted); }
+.actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 6px; }

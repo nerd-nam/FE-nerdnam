@@ -1,0 +1,19 @@
+/* 원본: style.css 단계 표시 (.stepper, .step, .step-*) */
+.stepper { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 14px; }
+
+.step { display: flex; align-items: center; gap: 8px; color: var(--subtle); }
+.dot { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line-strong); display: grid; place-items: center; font-size: 13px; }
+
+.done { color: var(--ink); }
+.done .dot { background: var(--ink); border-color: var(--ink); color: #fff; }
+.current { color: var(--accent); font-weight: 700; }
+.current .dot { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* 완료한 단계로 돌아가는 링크 */
+.link { min-height: 44px; text-decoration: none; border-radius: var(--radius-sm); }
+.link:hover { color: var(--accent); }
+.link:hover .text { text-decoration: underline; }
+.edit { font-size: 12px; font-weight: 600; color: var(--accent); }
+
+.line { width: 32px; height: 1px; background: var(--line-strong); }
+.lineDone { background: var(--ink); }

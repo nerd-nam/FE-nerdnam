@@ -1,0 +1,19 @@
+/* 원본: style.css 태그·배지 (.tag, .badge, .count), 판정 배지 (.verdict) */
+.tag { display: inline-flex; align-items: center; padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; font-size: 13px; color: var(--ink); background: #fff; }
+.tagFlat { border: 0; border-radius: 6px; padding: 2px 8px; font-size: 12px; background: var(--surface-muted); color: var(--muted); }
+.tagAccent { border: 0; border-radius: 6px; padding: 3px 8px; font-size: 12px; font-weight: 600; background: var(--accent-soft); color: var(--accent-ink); }
+
+.badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+.ok { background: var(--ok-soft); color: var(--ok); }
+.warn { background: var(--warn-soft); color: var(--warn); }
+.bad { background: var(--bad-soft); color: var(--bad); }
+.info { background: var(--accent-soft); color: var(--accent-ink); }
+.muted { background: var(--surface-sunken); color: var(--muted); }
+
+.count { display: inline-flex; align-items: center; font-size: 13px; font-weight: 600; border-radius: 999px; padding: 1px 9px; background: var(--line); color: var(--ink); }
+.countDark { background: var(--ink); color: #fff; }
+
+.verdict { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 700; white-space: nowrap; }
+.verdict.met { background: var(--ok-soft); color: var(--ok); }
+.verdict.partial { background: var(--warn-soft); color: var(--warn); }
+.verdict.unmet { background: var(--bad-soft); color: var(--bad); }

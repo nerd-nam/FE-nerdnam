@@ -1,0 +1,12 @@
+/* 원본: style.css 안내 문구 (.callout, .note), 상태 카드 (.state-card) */
+.callout { display: flex; gap: 10px; align-items: flex-start; padding: 16px 18px; border-radius: 12px; font-size: 14px; line-height: 1.6; }
+.callout > svg { margin-top: 2px; }
+.warn { background: var(--warn-soft); }
+.warn > svg { color: var(--warn); }
+.bad { background: var(--bad-soft); }
+.bad > svg { color: var(--bad); }
+.muted { background: var(--bg); color: var(--muted); font-size: 13px; }
+.sunken { background: var(--surface-sunken); color: var(--muted); font-size: 13px; }
+
+.note { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 1.6; color: var(--subtle); }
+.note > svg { width: 16px; height: 16px; margin-top: 2px; }
