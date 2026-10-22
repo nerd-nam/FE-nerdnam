@@ -12,7 +12,7 @@ import { Icon } from "@/shared/ui/Icon";
 import { Rating } from "@/shared/ui/Rating";
 import { cx } from "@/shared/ui/cx";
 import { EpisodeCard } from "./EpisodeCard";
-import { LeaveGuard } from "./LeaveGuard";
+import { LeaveGuard } from "@/features/onboarding/LeaveGuard";
 import type { Episode, ReviewData } from "./mock";
 import styles from "./Review.module.css";
 
@@ -70,7 +70,7 @@ export function ReviewBoard({ data, rawPanel }: ReviewBoardProps) {
   return (
     <>
       {/* 확정 전에 S04·온보딩 밖으로 나가면 경고 (기획서 v1.14 검토 결과 유지 규칙) */}
-      <LeaveGuard active />
+      <LeaveGuard active mode="leave-review" />
       <div className={styles.head}>
         <div className={styles.headText}>
           <div className={styles.headMeta}>

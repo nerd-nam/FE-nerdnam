@@ -1,0 +1,43 @@
+/* S03 경력 입력 화면. 원본: design/career.html, style.css 의 .split, .grid-2, .range, .check, .card--sm */
+.split { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+.side { flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.main { flex: 999 1 600px; min-width: 0; }
+
+.listTitle { font-size: 14px; font-weight: 600; color: var(--subtle); }
+
+/* 왼쪽 경력 카드 (누르면 오른쪽 양식이 그 경력으로) */
+.item {
+  display: flex; flex-direction: column; gap: 6px; width: 100%; padding: 20px; text-align: left; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); font: inherit; color: inherit;
+}
+.item[aria-pressed="true"] { border: 2px solid var(--accent); padding: 19px; }
+.itemTop { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.company { font-size: 16px; font-weight: 700; }
+.desc { font-size: 14px; color: var(--muted); }
+.period { font-size: 13px; color: var(--subtle); }
+.addItem[type] { min-height: 52px; border-radius: 14px; border-style: dashed; color: var(--accent); }
+
+.formTitle { font-size: 18px; font-weight: 700; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.range { display: flex; align-items: center; gap: 8px; }
+.range > input { flex: 1 1 0; min-width: 0; }
+.dash { color: var(--subtle); }
+.current { margin-top: 10px; }
+
+.fieldset { display: flex; flex-direction: column; gap: 10px; }
+.legend { display: flex; justify-content: space-between; width: 100%; margin-bottom: 4px; font-size: 14px; font-weight: 600; }
+.hint { font-weight: 400; color: var(--subtle); }
+.dutyRow { display: flex; align-items: center; gap: 10px; }
+.dutyNum { width: 20px; flex: none; font-size: 13px; color: var(--subtle); }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.start { align-self: flex-start; }
+
+.formFoot { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+.saved { margin-right: auto; font-size: 13px; color: var(--ok); }
+
+.skip { font-size: 14px; font-weight: 500; }
+
+@media (max-width: 720px) {
+  .grid2 { grid-template-columns: minmax(0, 1fr); }
+}
