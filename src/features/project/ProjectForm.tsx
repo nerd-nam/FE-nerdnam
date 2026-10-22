@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { routes } from "@/shared/routes";
-import { buttonClass } from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
 import { Field, Input, Select } from "@/shared/ui/Field";
 import { Icon } from "@/shared/ui/Icon";
@@ -77,15 +76,7 @@ export function ProjectForm({ project, affiliations, mySkills }: ProjectFormProp
         </Field>
       </div>
 
-      <div className={styles.upload}>
-        <Icon name="image" size="lg" className={styles.uploadIcon} />
-        <span className={styles.uploadText}>화면 캡처나 구조도가 있다면 올려 주세요. 포트폴리오 방향을 잡을 때 참고해요.</span>
-        {/* 진짜 파일 선택칸은 숨기고, 버튼 모양 라벨을 누르면 열리게 한다 */}
-        <label htmlFor="image-upload" className={buttonClass({})}>
-          이미지 선택
-        </label>
-        <input id="image-upload" name="image" type="file" accept="image/*" className="sr-only" />
-      </div>
+      {/* 이미지 업로드는 받지 않는다 (ADR-0004, 기획서 F1) */}
     </Card>
   );
 }

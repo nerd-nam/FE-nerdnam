@@ -35,11 +35,6 @@
 .legendHint { font-weight: 400; color: var(--subtle); }
 .newSkillInput { flex: 1 1 260px; width: auto; }
 
-/* 이미지 올리기 */
-.upload { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px; border: 1px dashed var(--line-dashed); border-radius: 12px; }
-.uploadIcon { color: var(--muted); }
-.uploadText { flex: 1; min-width: 200px; font-size: 14px; color: var(--muted); }
-
 /* 작성 가이드 */
 .guideTitle { font-size: 16px; font-weight: 700; }
 .guideList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; font-size: 14px; line-height: 1.55; }
