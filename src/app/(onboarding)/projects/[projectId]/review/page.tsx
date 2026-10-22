@@ -1,29 +1,42 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { Page, PageHead } from "@/shared/layout/Page";
+import { MOCK_REVIEW } from "@/features/review/mock";
+import { RawTextPanel } from "@/features/review/RawTextPanel";
+import { ReviewBoard } from "@/features/review/ReviewBoard";
+import { Page } from "@/shared/layout/Page";
 import { onboardingSteps } from "@/shared/steps";
-import { Callout } from "@/shared/ui/Callout";
 import { Stepper } from "@/shared/ui/Stepper";
 
 export const metadata: Metadata = { title: "프로젝트 재구성 검토" };
 
-// S05 프로젝트 재구성 검토 (주소: /projects/[projectId]/review) · 채우는 작업: FE-08
-// 제목·기간은 검토 중인 프로젝트의 값이 들어갈 자리다.
+// S05 프로젝트 재구성 검토 (주소: /projects/[projectId]/review) · 작업: FE-08
+// 지금: ① 모양 · ② 나누기 · ③ 움직임(화면 안에서만). 서버 저장·AI 요청(④)은 API 가 생기면 붙인다.
+// 데이터는 임시 데이터(features/review/mock.ts)이고, 지금은 p_102 만 있다.
 //
-// 단계 표시의 "프로젝트 수정" 링크가 지금 프로젝트(/projects/102)로 가야 해서 주소의 번호가 필요하다.
-// 번호는 요청이 들어와야 알 수 있으므로 단계 표시만 <Suspense> 로 감싼다. (S09 guide 화면과 같은 방식)
+// 단계 표시의 "프로젝트 수정" 링크와 화면 내용 모두 주소의 프로젝트 번호가 필요해서 함께 <Suspense> 로 감싼다.
 export default function ReviewPage({ params }: PageProps<"/projects/[projectId]/review">) {
   return (
     <Page tight>
       <Suspense>
         {params.then(({ projectId }) => (
-          <Stepper label="온보딩 단계" steps={onboardingSteps(projectId)} current={3} />
+          <ReviewContent projectId={projectId} />
         ))}
       </Suspense>
-      <PageHead title="[프로젝트 제목]" meta="[회사명] · [기간]" />
-      <Callout tone="sunken" icon="info">
-        FE-08 에서 만들 예정이에요.
-      </Callout>
     </Page>
+  );
+}
+
+function ReviewContent({ projectId }: { projectId: string }) {
+  // 임시 데이터에 없는 프로젝트(아직 나누지 않은 프로젝트 포함)는 404
+  if (projectId !== MOCK_REVIEW.projectId) notFound();
+  const data = MOCK_REVIEW;
+
+  return (
+    <>
+      <Stepper label="온보딩 단계" steps={onboardingSteps(projectId)} current={3} />
+      {/* RawTextPanel 은 서버 컴포넌트. 클라이언트 컴포넌트인 ReviewBoard 에 "이 자리에 놓아 줘"라고 건네준다 */}
+      <ReviewBoard data={data} rawPanel={<RawTextPanel data={data} />} />
+    </>
   );
 }
