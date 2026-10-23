@@ -2,6 +2,7 @@ import { routes } from "@/shared/routes";
 import { Badge, Tag } from "@/shared/ui/Badge";
 import { ButtonLink } from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
+import { cx } from "@/shared/ui/cx";
 import type { LibraryProject } from "./mock";
 import { ReregisterButton } from "./ReregisterButton";
 import styles from "./Library.module.css";
@@ -14,7 +15,7 @@ export function ProjectCard({ project }: { project: LibraryProject }) {
   if (project.status === "draft" || project.status === "review") {
     const isDraft = project.status === "draft";
     return (
-      <Card as="article" tone="dashed" className={styles.pending}>
+      <Card as="article" id={project.id} tone="dashed" className={cx(styles.pending, styles.card)}>
         <div className={styles.stack}>
           <div className={styles.row}>
             <Badge tone={isDraft ? "warn" : "info"}>{isDraft ? "초안" : "검토 중"}</Badge>
@@ -31,7 +32,8 @@ export function ProjectCard({ project }: { project: LibraryProject }) {
 
   const reregistering = project.status === "reregistering";
   return (
-    <Card as="article">
+    // id: /library#p_106 처럼 주소로 이 카드에 바로 올 수 있게 한다 (S08 재등록 중 근거, FE-nerdnam #4)
+    <Card as="article" id={project.id} className={styles.card}>
       <div className={`${styles.row} ${styles.between}`}>
         <div className={styles.stack}>
           <div className={styles.row}>

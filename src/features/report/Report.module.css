@@ -4,6 +4,12 @@
 /* 제목 오른쪽 버튼 (공고 수정 · 작성 방향 보기) */
 .headActions { display: flex; flex-wrap: wrap; gap: 10px; }
 
+/* 분석 기록 고르기 (이전 분석 보기, FE-nerdnam #5) */
+.picker { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.pickerLabel { font-size: 14px; font-weight: 600; color: var(--muted); }
+/* select.… : 공용 입력칸의 width: 100% 와 우선순위가 같으면 불러오는 순서에 따라 덮이므로 한 단계 더 구체적으로 */
+select.pickerSelect { width: auto; min-width: 0; }
+
 /* 맨 위 요약: 필수 · 우대 · 한 줄 진단. 좁으면 아래로 줄을 바꾼다
    section.… : 공용 Card 의 크기 스타일(padding·gap)과 우선순위가 같으면 CSS 를 불러오는 순서에 따라 덮이므로 한 단계 더 구체적으로 쓴다 */
 .summary { display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch; }

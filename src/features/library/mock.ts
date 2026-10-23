@@ -35,6 +35,16 @@ export const MOCK_LIBRARY_PROJECTS: LibraryProject[] = [
     skills: ["Spring Batch", "MySQL", "JPA"],
     episodes: [{ title: "정산 배치 쿼리 개선", summary: "배치가 마감 시간을 넘김 → 실행 계획 분석, 인덱스 재설계 → [배치 처리 시간 변화]" }],
   },
+  // 재등록 중: 확정했다가 "수정"을 눌러 다시 등록하는 중. 이전에 확정한 사례는 매칭에 계속 쓰인다 (ADR-0002)
+  // S08 근거 링크(재등록 중이면 이 카드로 옴, FE-nerdnam #4) 확인용. 결과의 [대괄호]는 원문에 없는 자리표시
+  {
+    id: "p_106",
+    title: "알림 발송 비동기화",
+    status: "reregistering",
+    meta: "OO커머스",
+    skills: ["Spring Boot", "Kafka"],
+    episodes: [{ title: "알림 발송 지연 개선", summary: "알림 발송이 결제 응답을 늦춤 → Kafka로 발송 분리 → [발송 지연 변화]" }],
+  },
   {
     id: "p_104",
     title: "[세 번째 프로젝트 제목]",

@@ -9,9 +9,12 @@ export const routes = {
   // S05 읽기 모드에서 사례 하나를 펼쳐 열기 (S08 사례 근거 → 여기, 기획서 v1.17)
   reviewEpisode: (id: string, episodeId: string) => `/projects/${id}/review#${episodeId}`,
   library: "/library", // S06
+  // S06 에서 프로젝트 카드 하나로 바로 가기 (S08 사례 근거의 프로젝트가 재등록 중일 때, FE-nerdnam #4)
+  libraryProject: (id: string) => `/library#${id}`,
   applyList: "/apply", // S10 공고 목록 (목록만 MVP, 기획서 v1.11)
   jd: (id: string) => `/apply/${id}/jd`, // S07
-  report: (id: string) => `/apply/${id}/report`, // S08
+  // S08. analysisId 를 주면 예전 분석 (분석 기록, FE-nerdnam #5). 없으면 가장 최근 분석
+  report: (id: string, analysisId?: string) => `/apply/${id}/report${analysisId ? `?analysis=${analysisId}` : ""}`,
   guide: (id: string, tab: GuideTab) => `/apply/${id}/guide/${tab}`, // S09
 } as const;
 
