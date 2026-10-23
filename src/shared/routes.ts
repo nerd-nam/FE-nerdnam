@@ -2,6 +2,8 @@
 // 화면 ID(S01 …)는 기획서 6장 기준.
 export const routes = {
   start: "/", // S01
+  // S01-2 약관 동의. next: 동의한 뒤 돌아갈 화면 (403 CONSENT_REQUIRED 를 받은 화면)
+  consent: (next?: string) => `/consent${next ? `?next=${encodeURIComponent(next)}` : ""}`,
   skills: "/skills", // S02
   career: "/career", // S03
   project: (id: string) => `/projects/${id}`, // S04
@@ -37,4 +39,11 @@ export type GuideTab = (typeof GUIDE_TABS)[number]["tab"];
 
 export function isGuideTab(value: string): value is GuideTab {
   return GUIDE_TABS.some((item) => item.tab === value);
+}
+
+// 동의 후 돌아갈 주소(next)가 우리 사이트 안 주소인지 확인한다. 아니면 내 경험으로.
+// "/consent?next=https://다른사이트" 같은 링크로 사용자를 밖으로 보내는 것을 막는다.
+// "/" 로 시작하되 "//"(다른 사이트를 뜻함)나 "/\" 는 안 된다.
+export function safeNext(next: string | undefined) {
+  return next && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : routes.library;
 }

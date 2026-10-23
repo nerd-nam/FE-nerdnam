@@ -13,8 +13,9 @@ type AppArea = (typeof MENU)[number]["area"];
 
 // 화면 영역마다 머리글 오른쪽이 다르다 (디자인 기준)
 // start: S01 시작 / onboarding: S02~S05 / app: S06~S09, S05 읽기 모드(확정한 프로젝트 보기)
+// plain: 로고만 (S01-2 약관 동의 — 동의 전에는 다른 화면을 쓸 수 없어 메뉴를 두지 않는다)
 // app 일 때는 area 로 지금 어느 메뉴에 있는지 알려 준다. 각 영역의 layout.tsx 가 넘겨 준다.
-type HeaderProps = { variant: "start" } | { variant: "onboarding" } | { variant: "app"; area: AppArea };
+type HeaderProps = { variant: "start" } | { variant: "onboarding" } | { variant: "plain" } | { variant: "app"; area: AppArea };
 
 export function Header(props: HeaderProps) {
   return (
