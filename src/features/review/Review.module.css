@@ -39,7 +39,7 @@
 .answers { padding-top: 12px; border-top: 1px solid #D9DCE2; font-size: 14px; }
 
 /* 사례 카드 */
-.ep { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; }
+.ep { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; scroll-margin-top: 16px; /* #사례id 로 왔을 때 화면 맨 위에 붙지 않게 */ }
 .epHead { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px 20px; }
 .epToggle { flex: 1; min-width: 0; min-height: 44px; display: flex; align-items: center; gap: 12px; padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer; }
 .epNum { flex: none; width: 30px; height: 30px; border-radius: var(--radius-sm); display: grid; place-items: center; font-size: 13px; font-weight: 700; background: var(--ep-bg); }

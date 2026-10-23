@@ -6,6 +6,8 @@ export const routes = {
   career: "/career", // S03
   project: (id: string) => `/projects/${id}`, // S04
   review: (id: string) => `/projects/${id}/review`, // S05
+  // S05 읽기 모드에서 사례 하나를 펼쳐 열기 (S08 사례 근거 → 여기, 기획서 v1.17)
+  reviewEpisode: (id: string, episodeId: string) => `/projects/${id}/review#${episodeId}`,
   library: "/library", // S06
   applyList: "/apply", // S10 공고 목록 (목록만 MVP, 기획서 v1.11)
   jd: (id: string) => `/apply/${id}/jd`, // S07

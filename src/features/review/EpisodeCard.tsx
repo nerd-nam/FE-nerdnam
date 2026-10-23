@@ -36,7 +36,8 @@ export function EpisodeCard(props: EpisodeCardProps) {
   const bodyId = `${episode.id}-body`;
 
   return (
-    <article className={cx(styles.ep, toneClass(index))}>
+    // id: 주소 끝에 #e_301 처럼 붙여 이 카드로 바로 올 수 있게 한다 (S08 사례 근거, 기획서 v1.17)
+    <article id={episode.id} className={cx(styles.ep, toneClass(index))}>
       <div className={styles.epHead}>
         {/* 제목 줄을 누르면 펼치고 접는다. aria-expanded 로 스크린리더에 펼침 상태를 알린다 */}
         <button type="button" className={styles.epToggle} aria-expanded={isOpen} aria-controls={bodyId} onClick={props.onToggle}>

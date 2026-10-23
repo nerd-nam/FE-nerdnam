@@ -2,7 +2,7 @@
 
 // S05 의 움직이는 부분 전체. 사례 결정·진행률·프로젝트 확정 버튼이 같은 상태를 봐야 해서 상태를 여기 한곳에 모은다.
 // 원문 패널(rawPanel)은 움직이지 않아서 서버에서 만들어 받아 그 자리에 끼워 넣기만 한다.
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { routes } from "@/shared/routes";
 import { Badge } from "@/shared/ui/Badge";
 import { Button, ButtonLink } from "@/shared/ui/Button";
@@ -34,6 +34,21 @@ export function ReviewBoard({ data, rawPanel }: ReviewBoardProps) {
   );
   const [resolved, setResolved] = useState<string[]>([]); // 처리한 확인 필요 질문 id
   const [feedback, setFeedback] = useState("");
+
+  // 주소 끝이 #e_301 처럼 사례 id 이면 그 사례를 펼치고 그 위치로 스크롤한다 (S08 사례 근거 → S05 읽기 모드)
+  // #… 부분은 서버로 오지 않아서, 화면이 브라우저에 그려진 다음(effect)에만 읽을 수 있다.
+  useEffect(() => {
+    function openFromHash() {
+      const id = decodeURIComponent(location.hash.slice(1));
+      if (!data.episodes.some((ep) => ep.id === id)) return;
+      setOpenId(id);
+      // 펼친 내용이 그려진 다음 프레임에 스크롤한다
+      requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ block: "start" }));
+    }
+    openFromHash();
+    window.addEventListener("hashchange", openFromHash);
+    return () => window.removeEventListener("hashchange", openFromHash);
+  }, [data.episodes]);
 
   // ── 계산해서 얻는 값 (상태로 따로 들고 있지 않는다)
   const pendingOf = (ep: Episode) => ep.unverified.filter((q) => !resolved.includes(q.id));

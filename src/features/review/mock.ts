@@ -172,7 +172,24 @@ const MOCK_CONFIRMED: ReviewData = {
   ],
 };
 
+// p_105: p_102 와 같은 내용을 확정까지 마친 프로젝트 (S05 읽기 모드)
+// S08 근거 링크 확인용이다. 실제로는 확정한 사례만 공고 매칭의 근거가 되는데, p_102 는 검토 화면을 보여 주려고 "검토 중"이라 따로 둔다.
+// S04·S06 임시 데이터에는 없다 (같은 이름 프로젝트가 둘로 보이지 않게). fixtures/ 가 나오면 하나로 맞춘다.
+// 그래서 읽기 모드의 "수정"(→ /projects/p_105)은 지금 404 가 된다.
+const MOCK_CONFIRMED_PAYMENT: ReviewData = {
+  ...MOCK_REVIEW,
+  projectId: "p_105",
+  projectStatus: "confirmed",
+  answers: [{ episodeId: "e_501", text: "피크 TPS 약 2배까지 문제없이 처리" }],
+  episodes: MOCK_REVIEW.episodes.map((ep) => ({
+    ...ep,
+    id: ep.id.replace("e_2", "e_5"), // e_201 → e_501, e_202 → e_502
+    status: "confirmed",
+    unverified: [],
+  })),
+};
+
 // 프로젝트 id 로 S05 데이터 찾기. 실제로는 서버 조회 (C-02 S05)
 export function findReview(projectId: string): ReviewData | undefined {
-  return [MOCK_REVIEW, MOCK_CONFIRMED].find((data) => data.projectId === projectId);
+  return [MOCK_REVIEW, MOCK_CONFIRMED, MOCK_CONFIRMED_PAYMENT].find((data) => data.projectId === projectId);
 }

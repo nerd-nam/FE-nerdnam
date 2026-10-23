@@ -35,6 +35,9 @@ export const MOCK_JDS: Record<string, JdDraft> = {
     duties: ["결제 승인·정산 시스템 개발 및 운영", "대용량 트래픽 대응을 위한 아키텍처 개선"],
     intro: "온라인 결제와 정산 서비스를 만드는 핀테크 회사",
   },
+  // S08 상태 화면(j_202 분석 중, j_203 분석 실패)의 "공고 수정"이 갈 곳. 내용은 간단히 채웠다
+  j_202: { ...EMPTY_JD, company: "△△커머스", position: "서버 개발자", required: ["Java 또는 Kotlin 개발 경력 2년 이상"] },
+  j_203: { ...EMPTY_JD, company: "□□랩", position: "백엔드 엔지니어", required: ["Spring 기반 API 개발 경험"] },
 };
 
 // 저장된 공고 찾기. MOCK_JDS[id] 로 바로 꺼내면 id 가 "constructor" 같은 글자일 때 엉뚱한 값이 나와서 hasOwn 으로 확인한다

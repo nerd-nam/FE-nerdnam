@@ -1,0 +1,76 @@
+/* S08 적합도 리포트 화면의 배치.
+   원본: design/report.html 과 style.css 의 .score, .bar-row, .card--dark, .card__label, .src, .split, .state-card, .spin */
+
+/* 제목 오른쪽 버튼 (공고 수정 · 작성 방향 보기) */
+.headActions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* 맨 위 요약: 필수 · 우대 · 한 줄 진단. 좁으면 아래로 줄을 바꾼다
+   section.… : 공용 Card 의 크기 스타일(padding·gap)과 우선순위가 같으면 CSS 를 불러오는 순서에 따라 덮이므로 한 단계 더 구체적으로 쓴다 */
+.summary { display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch; }
+section.scoreCard { flex: 1 1 280px; padding: 22px; }
+.scoreLabel { font-size: 14px; font-weight: 600; color: var(--muted); }
+.score { font-size: 34px; font-weight: 700; line-height: 1; }
+.scoreSub { font-size: 18px; font-weight: 500; color: var(--subtle); }
+.bar { display: grid; gap: 4px; }
+.bar span { height: 8px; border-radius: 4px; background: var(--track); }
+.bar .barMet { background: var(--ok); }
+/* 부분 충족은 빗금으로 (색만으로 구분하지 않게) */
+.bar .barPartial { background: repeating-linear-gradient(135deg, #C77A2A 0 4px, #F2D9BC 4px 8px); }
+
+section.diagnosis { flex: 2 1 360px; padding: 22px; justify-content: center; gap: 8px; }
+.diagnosisLabel { font-size: 13px; font-weight: 600; color: #B9C2DB; }
+.diagnosisText { font-size: 17px; line-height: 1.6; font-weight: 500; }
+
+/* 왼쪽 요건별 판정 + 오른쪽 갭 대응 가이드 */
+.split { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+.main { flex: 999 1 620px; min-width: 0; }
+section.side { flex: 1 1 320px; min-width: 0; padding: 22px; gap: 16px; }
+
+.between { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.cardTitle { font-size: 17px; font-weight: 700; }
+.sideTitle { font-size: 16px; font-weight: 700; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* 요건 한 줄: 왼쪽 판정 배지 칸(112px) + 오른쪽 내용 */
+.rows { list-style: none; margin: 0; padding: 0; }
+.row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 16px; padding: 18px 0; border-top: 1px solid var(--line); }
+.rowBody { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.rowTitle { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+.rowTitle strong { font-size: 16px; font-weight: 600; }
+.kind { font-size: 12px; font-weight: 700; color: var(--subtle); }
+.reason { font-size: 14px; line-height: 1.6; color: var(--muted); }
+.sources { display: flex; flex-wrap: wrap; gap: 6px; }
+.src {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 10px;
+  border-radius: var(--radius-sm); background: var(--accent-soft); color: var(--accent-ink);
+  font-size: 13px; font-weight: 600; text-decoration: none;
+}
+.src:hover { background: #E0E6FB; color: var(--accent-ink); }
+
+/* 갭 대응 가이드 한 묶음. 묶음 사이에 줄을 긋는다 */
+.gap { display: flex; flex-direction: column; gap: 8px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.gapLabel { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; }
+.unmet { color: var(--bad); }
+.partial { color: var(--warn); }
+.fallback { font-size: 12px; font-weight: 500; color: var(--subtle); }
+.advice { font-size: 14px; line-height: 1.65; }
+.avoid { font-size: 13px; color: var(--subtle); }
+.addProject { font-size: 14px; font-weight: 600; }
+
+/* 분석 중 / 분석 실패 (style.css .state-card) */
+.stateWait, .stateBad { border-radius: var(--radius-lg); padding: 24px; display: flex; flex-direction: column; gap: 14px; }
+.stateWait { background: var(--surface-sunken); }
+.stateBad { background: var(--bad-soft); }
+.stateTitle { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 700; }
+.stateBad .stateTitle { color: var(--bad); }
+.stateText { font-size: 14px; line-height: 1.6; color: var(--muted); }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 0.9s linear infinite; }
+/* 움직임을 줄이도록 설정한 사용자에게는 돌리지 않는다 */
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+
+@media (max-width: 720px) {
+  /* 좁은 화면에서는 판정 배지를 내용 위에 놓는다 */
+  .row { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+}
