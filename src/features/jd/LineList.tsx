@@ -70,7 +70,17 @@ export function LineList({ name, title, required, where, desc, placeholder, addL
 
   function remove(id: string) {
     // 마지막 한 줄을 지우면 빈 줄 하나를 남긴다 (입력칸이 하나도 없으면 다시 적을 곳이 없어서)
-    onChange(lines.length > 1 ? lines.filter((line) => line.id !== id) : [newLine()]);
+    // 지운 뒤에는 그 자리에 온 줄(마지막 줄이었으면 윗줄)로 커서를 옮긴다. 삭제 버튼이 사라져 포커스가 맨 위로 튀지 않게 (FE-16)
+    if (lines.length === 1) {
+      const line = newLine();
+      focusNext.current = line.id;
+      onChange([line]);
+      return;
+    }
+    const index = lines.findIndex((line) => line.id === id);
+    const next = lines.filter((line) => line.id !== id);
+    focusNext.current = (next[index] ?? next[index - 1]).id;
+    onChange(next);
   }
 
   function add() {

@@ -40,7 +40,14 @@ export function EpisodeCard(props: EpisodeCardProps) {
     <article id={episode.id} className={cx(styles.ep, toneClass(index))}>
       <div className={styles.epHead}>
         {/* 제목 줄을 누르면 펼치고 접는다. aria-expanded 로 스크린리더에 펼침 상태를 알린다 */}
-        <button type="button" className={styles.epToggle} aria-expanded={isOpen} aria-controls={bodyId} onClick={props.onToggle}>
+        <button
+          type="button"
+          id={`${episode.id}-toggle`} // 결정한 뒤 커서를 이 제목으로 옮길 때 쓴다 (FE-16)
+          className={styles.epToggle}
+          aria-expanded={isOpen}
+          aria-controls={bodyId}
+          onClick={props.onToggle}
+        >
           <span className={styles.epNum}>{index + 1}</span>
           <span className={styles.epTitleWrap}>
             <span className={styles.epTitle}>{episode.title}</span>
@@ -191,7 +198,7 @@ function EpisodeBody({ episode, viewingVersion, pending, bodyId, readOnly, ...on
               <Icon name="refresh" size="sm" />이 사례 수정 요청
             </Button>
             <Button>직접 편집</Button>
-            <Button variant="primary" disabled={pending.length > 0} onClick={on.onConfirm}>
+            <Button id={`${episode.id}-confirm`} variant="primary" disabled={pending.length > 0} onClick={on.onConfirm}>
               <Icon name="check" size="sm" bold />이 사례 확정
             </Button>
           </div>

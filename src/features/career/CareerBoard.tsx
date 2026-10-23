@@ -11,6 +11,7 @@ import { Field, Input, Select } from "@/shared/ui/Field";
 import { PeriodField, periodErrors } from "@/shared/ui/PeriodField";
 import { Card } from "@/shared/ui/Card";
 import { Icon } from "@/shared/ui/Icon";
+import { useFocusAfterRender } from "@/shared/useFocusAfterRender";
 import { EMPLOYMENT_TYPES, MAX_DUTIES, emptyCareer, formatMonth, type Career, type EmploymentType } from "./mock";
 import styles from "./Career.module.css";
 
@@ -19,6 +20,7 @@ type CareerBoardProps = { initialCareers: Career[]; mySkills: string[] };
 export function CareerBoard({ initialCareers, mySkills }: CareerBoardProps) {
   const [careers, setCareers] = useState(initialCareers);
   const [selectedId, setSelectedId] = useState(initialCareers[0]?.id ?? "new");
+  const focusAfter = useFocusAfterRender();
   const selected = careers.find((c) => c.id === selectedId) ?? emptyCareer();
 
   function save(next: Career) {
@@ -35,6 +37,8 @@ export function CareerBoard({ initialCareers, mySkills }: CareerBoardProps) {
   function remove(id: string) {
     // 프로젝트가 연결된 경력은 서버가 삭제를 거부하고 소속을 바꾸도록 안내한다 (ADR-0002 Q8). 그 안내는 ④ 단계에서
     const rest = careers.filter((c) => c.id !== id);
+    // 지운 뒤 새로 고른 경력 카드(없으면 "경력 추가")로 커서를 옮긴다 (FE-16)
+    focusAfter(rest[0] ? `career-item-${rest[0].id}` : "career-add");
     setCareers(rest);
     setSelectedId(rest[0]?.id ?? "new");
   }
@@ -46,7 +50,7 @@ export function CareerBoard({ initialCareers, mySkills }: CareerBoardProps) {
           경력 {careers.length}건
         </h2>
         {careers.map((c) => (
-          <button key={c.id} type="button" className={styles.item} aria-pressed={c.id === selectedId} onClick={() => setSelectedId(c.id)}>
+          <button key={c.id} id={`career-item-${c.id}`} type="button" className={styles.item} aria-pressed={c.id === selectedId} onClick={() => setSelectedId(c.id)}>
             <span className={styles.itemTop}>
               <strong className={styles.company}>{c.company || "(회사명 없음)"}</strong>
               {c.end === null && <Badge tone="info">재직 중</Badge>}
@@ -57,7 +61,7 @@ export function CareerBoard({ initialCareers, mySkills }: CareerBoardProps) {
             </span>
           </button>
         ))}
-        <Button block className={styles.addItem} onClick={() => setSelectedId("new")} aria-pressed={selectedId === "new"}>
+        <Button id="career-add" block className={styles.addItem} onClick={() => setSelectedId("new")} aria-pressed={selectedId === "new"}>
           <Icon name="plus" />
           경력 추가
         </Button>

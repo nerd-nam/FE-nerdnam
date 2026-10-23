@@ -11,6 +11,7 @@ import { Textarea } from "@/shared/ui/Field";
 import { Icon } from "@/shared/ui/Icon";
 import { Rating } from "@/shared/ui/Rating";
 import { cx } from "@/shared/ui/cx";
+import { useFocusAfterRender } from "@/shared/useFocusAfterRender";
 import { ReregisterButton } from "@/features/library/ReregisterButton";
 import { EpisodeCard } from "./EpisodeCard";
 import { LeaveGuard } from "@/features/onboarding/LeaveGuard";
@@ -34,6 +35,7 @@ export function ReviewBoard({ data, rawPanel }: ReviewBoardProps) {
   );
   const [resolved, setResolved] = useState<string[]>([]); // 처리한 확인 필요 질문 id
   const [feedback, setFeedback] = useState("");
+  const focusAfter = useFocusAfterRender();
 
   // 주소 끝이 #e_301 처럼 사례 id 이면 그 사례를 펼치고 그 위치로 스크롤한다 (S08 사례 근거 → S05 읽기 모드)
   // #… 부분은 서버로 오지 않아서, 화면이 브라우저에 그려진 다음(effect)에만 읽을 수 있다.
@@ -63,9 +65,11 @@ export function ReviewBoard({ data, rawPanel }: ReviewBoardProps) {
   }
 
   // 결정하고 나면 아직 검토 중인 다음 사례를 펼친다 (디자인 review.js 와 같은 흐름)
+  // 누른 버튼이 카드와 함께 접혀 사라지므로, 커서를 펼친 사례의 제목(없으면 방금 결정한 사례의 제목)으로 옮긴다 (FE-16)
   function openNextReviewing(afterId: string) {
     const next = episodes.find((ep) => ep.id !== afterId && ep.status === "review");
     setOpenId(next ? next.id : null);
+    focusAfter(`${next ? next.id : afterId}-toggle`);
   }
 
   function decide(id: string, status: "confirmed" | "excluded") {
@@ -143,12 +147,18 @@ export function ReviewBoard({ data, rawPanel }: ReviewBoardProps) {
               onViewVersion={(v) => setViewing((prev) => ({ ...prev, [ep.id]: v }))}
               onUseVersion={(v) => switchToVersion(ep.id, v)}
               // 답변을 원문에 덧붙여 새 버전을 만드는 일(AI)은 ④ 단계에서 붙인다. 지금은 질문만 처리됨으로 바꾼다
-              onResolve={(questionId) => setResolved((prev) => [...prev, questionId])}
+              onResolve={(questionId) => {
+                setResolved((prev) => [...prev, questionId]);
+                // 질문 상자가 사라지므로 커서를 다음 질문의 답변칸, 없으면 "이 사례 확정"으로 옮긴다 (FE-16)
+                const nextQuestion = pendingOf(ep).find((q) => q.id !== questionId);
+                focusAfter(nextQuestion ? `${nextQuestion.id}-answer` : `${ep.id}-confirm`);
+              }}
               onConfirm={() => decide(ep.id, "confirmed")}
               onExclude={() => decide(ep.id, "excluded")}
               onReopen={() => {
                 updateEpisode(ep.id, (item) => ({ ...item, status: "review" }));
                 setOpenId(ep.id);
+                focusAfter(`${ep.id}-toggle`); // "다시 검토하기" 버튼이 사라지므로 그 사례 제목으로 (FE-16)
               }}
             />
           ))}

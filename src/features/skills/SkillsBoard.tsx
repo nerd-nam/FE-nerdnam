@@ -13,6 +13,7 @@ import { IconButton } from "@/shared/ui/Button";
 import { Icon } from "@/shared/ui/Icon";
 import { Table } from "@/shared/ui/Table";
 import { cx } from "@/shared/ui/cx";
+import { useFocusAfterRender } from "@/shared/useFocusAfterRender";
 import {
   CATEGORIES,
   categoryLabel,
@@ -41,6 +42,7 @@ export function SkillsBoard({ initialSkills, usage }: SkillsBoardProps) {
   const [skills, setSkills] = useState(initialSkills);
   // 지우려 했지만 쓰는 곳이 있어 막힌 기술. 있으면 안내창을 띄운다
   const [blocked, setBlocked] = useState<string | null>(null);
+  const focusAfter = useFocusAfterRender();
   const [category, setCategory] = useState<Category>("framework");
   const [query, setQuery] = useState("");
 
@@ -58,6 +60,10 @@ export function SkillsBoard({ initialSkills, usage }: SkillsBoardProps) {
       setBlocked(name);
       return;
     }
+    // 지운 뒤 다음 줄(마지막이었으면 윗줄)의 삭제 버튼으로, 다 지웠으면 검색칸으로 커서를 옮긴다 (FE-16)
+    const index = skills.findIndex((s) => s.name === name);
+    const left = skills.length - 1;
+    focusAfter(left === 0 ? "skill-search" : `skill-del-${Math.min(index, left - 1)}`);
     setSkills((prev) => prev.filter((s) => s.name !== name));
   }
 
@@ -156,7 +162,7 @@ export function SkillsBoard({ initialSkills, usage }: SkillsBoardProps) {
             </tr>
           </thead>
           <tbody>
-            {skills.map((skill) => (
+            {skills.map((skill, index) => (
               <tr key={skill.name}>
                 <td className={styles.name}>{skill.name}</td>
                 <td className={styles.muted}>{categoryLabel(skill.category)}</td>
@@ -180,7 +186,7 @@ export function SkillsBoard({ initialSkills, usage }: SkillsBoardProps) {
                   </div>
                 </td>
                 <td>
-                  <IconButton label={`${skill.name} 삭제`} onClick={() => remove(skill.name)}>
+                  <IconButton id={`skill-del-${index}`} label={`${skill.name} 삭제`} onClick={() => remove(skill.name)}>
                     <Icon name="x" />
                   </IconButton>
                 </td>

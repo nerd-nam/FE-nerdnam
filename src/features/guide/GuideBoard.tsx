@@ -16,6 +16,7 @@ import { Icon } from "@/shared/ui/Icon";
 import { Rating } from "@/shared/ui/Rating";
 import { cx } from "@/shared/ui/cx";
 import { StateCard, StateText } from "@/shared/ui/StateCard";
+import { useFocusAfterRender } from "@/shared/useFocusAfterRender";
 import type { GuideStatus } from "./mock";
 import styles from "./Guide.module.css";
 
@@ -30,6 +31,13 @@ type GuideBoardProps = {
 export function GuideBoard({ tabLabel, initialStatus, regenHint, panel, sources }: GuideBoardProps) {
   const [status, setStatus] = useState(initialStatus);
   const [feedback, setFeedback] = useState("");
+  const focusAfter = useFocusAfterRender();
+
+  // 만들기 시작: 왼쪽이 "만드는 중" 상자로 바뀌고 누른 버튼은 사라지거나 막히므로, 커서를 그 상자로 옮긴다 (FE-16)
+  function regenerate() {
+    focusAfter("guide-state");
+    setStatus("generating");
+  }
 
   return (
     <div className={styles.split}>
@@ -38,14 +46,14 @@ export function GuideBoard({ tabLabel, initialStatus, regenHint, panel, sources 
         <h2 className={cx("print-only", styles.printTitle)}>{tabLabel}</h2>
         {status === "done" && panel}
         {status === "generating" && (
-          <StateCard tone="wait" title={`${tabLabel} 방향을 만들고 있어요`}>
+          <StateCard id="guide-state" tone="wait" title={`${tabLabel} 방향을 만들고 있어요`}>
             <StateText>공고와 확정한 내 경험을 바탕으로 만들고 있어요. 잠시만 기다려 주세요.</StateText>
           </StateCard>
         )}
         {status === "failed" && (
           <StateCard tone="bad" title={`${tabLabel} 방향을 만들지 못했어요`}>
             <StateText>잠시 후 다시 시도해 주세요.</StateText>
-            <Button onClick={() => setStatus("generating")}>
+            <Button onClick={regenerate}>
               <Icon name="refresh" size="sm" />
               다시 시도
             </Button>
@@ -73,7 +81,7 @@ export function GuideBoard({ tabLabel, initialStatus, regenHint, panel, sources 
             onChange={(event) => setFeedback(event.target.value)}
           />
           {/* 방향을 적어야 누를 수 있다 (S05 다시 나누기와 같은 규칙, C-02 S09 에 FE 제안으로 기록). 만드는 중에는 막는다 */}
-          <Button disabled={!feedback.trim() || status === "generating"} onClick={() => setStatus("generating")}>
+          <Button disabled={!feedback.trim() || status === "generating"} onClick={regenerate}>
             <Icon name="refresh" size="sm" />이 탭 다시 만들기
           </Button>
         </Card>

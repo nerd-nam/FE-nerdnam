@@ -7,17 +7,25 @@ import { useState } from "react";
 import { Button } from "@/shared/ui/Button";
 import { Icon } from "@/shared/ui/Icon";
 import { StateCard, StateText } from "@/shared/ui/StateCard";
+import { useFocusAfterRender } from "@/shared/useFocusAfterRender";
 import type { AnalysisStatus } from "./mock";
 
 export function AnalysisState({ initial }: { initial: Exclude<AnalysisStatus, "done"> }) {
   const [status, setStatus] = useState(initial);
+  const focusAfter = useFocusAfterRender();
 
   if (status === "failed") {
     return (
       <StateCard tone="bad" title="분석을 마치지 못했어요">
         {/* 기획서 F4 표 마지막 줄과 8장(GPU 서버 꺼짐)의 "잠시 후 다시 시도" 안내를 따랐다 */}
         <StateText>입력한 공고는 그대로 남아 있으니 잠시 후 다시 시도해 주세요.</StateText>
-        <Button onClick={() => setStatus("analyzing")}>
+        <Button
+          onClick={() => {
+            // 누른 버튼이 사라지므로 커서를 "분석 중" 상자로 옮긴다 (FE-16)
+            focusAfter("analysis-state");
+            setStatus("analyzing");
+          }}
+        >
           <Icon name="refresh" size="sm" />
           다시 시도
         </Button>
@@ -26,7 +34,7 @@ export function AnalysisState({ initial }: { initial: Exclude<AnalysisStatus, "d
   }
 
   return (
-    <StateCard tone="wait" title="공고와 내 경험을 맞춰 보고 있어요">
+    <StateCard id="analysis-state" tone="wait" title="공고와 내 경험을 맞춰 보고 있어요">
       <StateText>요건마다 내 경험에서 근거를 찾아 판정하고 있어요. 잠시만 기다려 주세요.</StateText>
     </StateCard>
   );

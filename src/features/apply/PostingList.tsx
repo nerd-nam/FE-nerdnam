@@ -11,6 +11,7 @@ import { Button, ButtonLink } from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
 import { Dialog } from "@/shared/ui/Dialog";
 import { Icon } from "@/shared/ui/Icon";
+import { useFocusAfterRender } from "@/shared/useFocusAfterRender";
 import type { PostingStatus, PostingSummary } from "./mock";
 import styles from "./Apply.module.css";
 
@@ -25,6 +26,7 @@ const STATUS_VIEW = {
 export function PostingList({ initialPostings }: { initialPostings: PostingSummary[] }) {
   const [postings, setPostings] = useState(initialPostings);
   const [deleting, setDeleting] = useState<PostingSummary | null>(null); // 삭제 확인창에 띄운 공고
+  const focusAfter = useFocusAfterRender();
 
   if (postings.length === 0) {
     return (
@@ -35,7 +37,7 @@ export function PostingList({ initialPostings }: { initialPostings: PostingSumma
         <p className={styles.emptyDesc}>
           지원할 공고의 필수·우대사항을 옮겨 적으면, 내 경험으로 적합도를 보고 작성 방향을 받을 수 있어요.
         </p>
-        <ButtonLink variant="primary" href={routes.jd(NEW_JD_ID)}>
+        <ButtonLink id="first-posting" variant="primary" href={routes.jd(NEW_JD_ID)}>
           <Icon name="plus" />첫 공고 입력하기
         </ButtonLink>
       </Card>
@@ -45,7 +47,7 @@ export function PostingList({ initialPostings }: { initialPostings: PostingSumma
   return (
     <>
       <ul className={styles.list} aria-label="공고 목록">
-        {postings.map((p) => {
+        {postings.map((p, index) => {
           const view = STATUS_VIEW[p.status];
           return (
             <li key={p.jdId}>
@@ -78,7 +80,7 @@ export function PostingList({ initialPostings }: { initialPostings: PostingSumma
                       </p>
                     )}
                   </div>
-                  <Button variant="ghost" size="sm" aria-label={`${p.company} ${p.position} 공고 삭제`} onClick={() => setDeleting(p)}>
+                  <Button id={`posting-del-${index}`} variant="ghost" size="sm" aria-label={`${p.company} ${p.position} 공고 삭제`} onClick={() => setDeleting(p)}>
                     삭제
                   </Button>
                 </div>
@@ -102,6 +104,10 @@ export function PostingList({ initialPostings }: { initialPostings: PostingSumma
               variant="danger"
               onClick={() => {
                 // TODO(④): 서버에 공고 삭제 요청. 지금은 화면 목록에서만 뺀다
+                // 지운 뒤 다음 카드(마지막이었으면 윗 카드)의 삭제 버튼으로, 다 지웠으면 "첫 공고 입력하기"로 커서를 옮긴다 (FE-16)
+                const index = postings.findIndex((p) => p.jdId === deleting?.jdId);
+                const left = postings.length - 1;
+                focusAfter(left === 0 ? "first-posting" : `posting-del-${Math.min(index, left - 1)}`);
                 setPostings((prev) => prev.filter((p) => p.jdId !== deleting?.jdId));
                 setDeleting(null);
               }}

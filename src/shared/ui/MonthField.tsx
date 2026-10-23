@@ -3,7 +3,7 @@
 // 월 입력칸: 직접 입력 + 달력 버튼으로 고르기. S03 재직기간, S04 프로젝트 기간에서 쓴다.
 // 브라우저 기본 월 선택 칸(type="month")은 맥 Safari 가 지원하지 않아 아무 글자나 들어가서 직접 만들었다.
 // - 직접 입력: 숫자만 치면 "2023.03" 모양으로 점을 넣는다 (규칙은 shared/period.ts)
-// - 고르기: 달력 버튼 → 연도 ‹ › 와 1~12월. 이번 달보다 뒤는 고를 수 없다. Esc·바깥 클릭으로 닫는다
+// - 고르기: 달력 버튼 → 연도 ‹ › 와 1~12월. 이번 달보다 뒤는 고를 수 없다. Esc·바깥 클릭·Tab 으로 밖에 나가면 닫는다
 // 값은 "YYYY-MM"(다 적지 않았으면 적은 글자 그대로)으로 onChange 에 알린다. 값은 쓰는 쪽이 들고 있다.
 import { useEffect, useRef, useState } from "react";
 import { formatTyped, isMonth, padMonth, thisMonth, toText, toValue } from "@/shared/period";
@@ -57,7 +57,14 @@ export function MonthField({ id, label, value, onChange, onBlur, disabled, inval
   const maxYear = Number(max.slice(0, 4));
 
   return (
-    <div ref={wrapRef} className={styles.wrap}>
+    <div
+      ref={wrapRef}
+      className={styles.wrap}
+      // 키보드(Tab)로 칸·달력 밖으로 나가면 달력을 닫는다. 안 닫으면 아래 칸들을 가린 채 남는다 (FE-16 점검)
+      onBlur={(event) => {
+        if (!wrapRef.current?.contains(event.relatedTarget as Node | null)) setOpen(false);
+      }}
+    >
       <input
         ref={inputRef}
         id={id}
