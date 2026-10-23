@@ -42,6 +42,19 @@ export type PortfolioPage = {
 };
 export type PageFlow = { projectTitle: string; pages: PortfolioPage[] };
 
+// 이미지 프롬프트 탭 (C-02 S09, 기획서 F6·7.3, 작업목록 AI-10)
+// 분위기를 전하는 그림만 이미지 생성 프롬프트로 주고, 글자·숫자가 정확해야 하는 도식·차트는 도구 안내만 준다 (D-1 결정: 안내만)
+export type ImagePrompt = {
+  id: string;
+  title: string;
+  purpose: string; // 용도: "포트폴리오 1쪽 커버"
+  ratio: string; // 비율: "16:9"
+  prompt: string; // 영문 프롬프트
+  negative: string; // 제외 요소
+};
+export type ToolVisual = { name: string; where: string; tool: string }; // 도구로 만들 시각자료: 이름, 위치, 도구
+export type ImageGuide = { prompts: ImagePrompt[]; toolVisuals: ToolVisual[]; regenHint: string };
+
 // "이 방향에 쓰인 근거" 목록
 export type GuideSource = { evidence: Evidence; requirementCount: number };
 
@@ -56,7 +69,7 @@ export type Guide = {
     portfolio: GuideDoc & { pageFlow: PageFlow };
     career: GuideDoc & { rewrites: RewriteRow[]; preview: CareerPreview };
   };
-  imageRegenHint: string; // 이미지 프롬프트 탭 내용은 FE-15
+  image: ImageGuide;
   sources: GuideSource[];
 };
 
@@ -161,6 +174,36 @@ const DOCS: Guide["docs"] = {
   },
 };
 
+// 디자인 guide-data.js 의 image 와 기획서 7.3 예시
+const IMAGE: ImageGuide = {
+  regenHint: "예: 커버를 더 밝은 톤으로 바꿔 줘",
+  prompts: [
+    {
+      id: "img1",
+      title: "커버 이미지 · 결제 승인 API 성능 개선",
+      purpose: "포트폴리오 1쪽 커버",
+      ratio: "16:9",
+      prompt:
+        "Clean isometric illustration of a payment request flowing through a fast server pipeline, a glowing cache layer and an asynchronous message queue branching off, minimal flat tech style, navy and teal palette, soft lighting, white background, 16:9, no text, no logos",
+      negative: "text, letters, numbers, brand logos, cluttered background, photorealistic people",
+    },
+    {
+      id: "img2",
+      title: "개념 이미지 · 동기 처리 vs 비동기 처리",
+      purpose: "포트폴리오 4쪽 보조 이미지",
+      ratio: "4:3",
+      prompt:
+        "Two side-by-side minimal abstract compositions: on the left a single long chain of blocks waiting in a queue, on the right a short chain with branches flowing in parallel, flat vector style, navy, teal and light gray, white background, 4:3, no text",
+      negative: "text, labels, numbers, logos, 3D clutter",
+    },
+  ],
+  toolVisuals: [
+    { name: "원인 구조 도식", where: "포트폴리오 3쪽", tool: "다이어그램" },
+    { name: "해결 설계 Before/After 도식", where: "포트폴리오 4쪽", tool: "다이어그램" },
+    { name: "응답시간 비교 차트", where: "포트폴리오 5쪽", tool: "차트" },
+  ],
+};
+
 const SOURCES: GuideSource[] = [
   { evidence: EP_PAYMENT, requirementCount: 3 },
   { evidence: EP_BATCH, requirementCount: 1 },
@@ -177,7 +220,7 @@ const MOCK_GUIDES: Record<string, Guide> = {
     position: "백엔드 개발자 (결제 플랫폼)",
     status: ALL_DONE,
     docs: DOCS,
-    imageRegenHint: "예: 커버를 더 밝은 톤으로 바꿔 줘",
+    image: IMAGE,
     sources: SOURCES,
   },
   j_204: {
@@ -186,7 +229,7 @@ const MOCK_GUIDES: Record<string, Guide> = {
     position: "백엔드 개발자",
     status: { ...ALL_DONE, motive: "generating", intro: "failed" },
     docs: DOCS,
-    imageRegenHint: "예: 커버를 더 밝은 톤으로 바꿔 줘",
+    image: IMAGE,
     sources: SOURCES,
   },
 };

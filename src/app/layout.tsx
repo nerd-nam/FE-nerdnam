@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans_KR } from "next/font/google";
+import { IBM_Plex_Mono, IBM_Plex_Sans_KR } from "next/font/google";
 import "./globals.css";
 
 // 디자인 글꼴. 빌드 시 내려받아 우리 서버에서 제공한다(사용자 브라우저가 Google에 직접 요청하지 않음).
@@ -7,6 +7,16 @@ import "./globals.css";
 const plexSans = IBM_Plex_Sans_KR({
   weight: ["400", "500", "600", "700"],
   variable: "--font-plex-sans",
+  display: "swap",
+  preload: false,
+});
+
+// 고정폭 글꼴: S09 이미지 프롬프트(영문 프롬프트 상자)에서만 쓴다 (design/guide.html).
+// 쓰는 화면이 하나라 모든 화면에서 미리 받지 않게 preload 를 끈다.
+const plexMono = IBM_Plex_Mono({
+  weight: ["400", "500"],
+  subsets: ["latin"],
+  variable: "--font-plex-mono",
   display: "swap",
   preload: false,
 });
@@ -22,7 +32,7 @@ export const metadata: Metadata = {
 // 루트 레이아웃: 모든 화면을 감싸는 가장 바깥 틀. <html>, <body> 는 여기에만 둔다.
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ko" className={plexSans.variable}>
+    <html lang="ko" className={`${plexSans.variable} ${plexMono.variable}`}>
       <body>{children}</body>
     </html>
   );

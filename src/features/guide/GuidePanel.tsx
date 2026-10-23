@@ -2,12 +2,12 @@ import Link from "next/link";
 import { evidenceHref } from "@/shared/evidence";
 import type { GuideTab } from "@/shared/routes";
 import { Tag } from "@/shared/ui/Badge";
-import { Callout } from "@/shared/ui/Callout";
 import { Card, CardDesc } from "@/shared/ui/Card";
 import { CopyButton } from "@/shared/ui/CopyButton";
 import { Icon } from "@/shared/ui/Icon";
 import { Table } from "@/shared/ui/Table";
 import type { CareerPreview, CoverageRow, Guide, GuideDoc, RewriteRow } from "./mock";
+import { ImagePanel } from "./ImagePanel";
 import { PageFlow } from "./PageFlow";
 import styles from "./Guide.module.css";
 
@@ -15,13 +15,7 @@ import styles from "./Guide.module.css";
 // 네 탭 공통: 핵심 메시지 → 문단 구성 → (탭 전용 블록) → 강조할 키워드·피해야 할 것
 // 움직이는 부분은 "구성 복사" 버튼뿐이라 그것만 클라이언트 컴포넌트(CopyButton)다.
 export function GuidePanel({ tab, guide }: { tab: GuideTab; guide: Guide }) {
-  if (tab === "image") {
-    return (
-      <Callout tone="sunken" icon="info">
-        이미지 프롬프트 탭은 FE-15 에서 만들 예정이에요.
-      </Callout>
-    );
-  }
+  if (tab === "image") return <ImagePanel image={guide.image} />;
 
   const doc = guide.docs[tab];
   return (

@@ -32,9 +32,9 @@
   --bad-soft: #FCEBEA;
   --track: #DDE0E6;
 
-  /* 글꼴: --font-plex-sans 는 layout.tsx 에서 next/font 가 채워 준다 */
+  /* 글꼴: --font-plex-sans · --font-plex-mono 는 layout.tsx 에서 next/font 가 채워 준다 */
   --font: var(--font-plex-sans), system-ui, -apple-system, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 
   /* 모양 */
   --radius-sm: 8px;
