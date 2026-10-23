@@ -10,5 +10,7 @@
 .on { color: #E0A100; }
 .on svg { fill: currentColor; }
 .label { font-size: 14px; color: var(--muted); }
-.comment { flex: 1 1 220px; width: auto; }
+/* min-width: 0 — 입력칸은 기본 너비(글자 약 20자)보다 좁아지지 않으려 해서, 좁은 카드(S09 오른쪽 300px)에서 밖으로 밀려 나간다.
+   Safari 는 이 기본 너비를 Chrome 보다 크게 잡아 특히 잘 넘친다. 0 으로 두면 카드 폭에 맞춰 줄어든다 */
+.comment { flex: 1 1 220px; width: auto; min-width: 0; }
 .done { margin: 0; font-size: 13px; color: var(--ok); }
