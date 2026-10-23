@@ -1,0 +1,7 @@
+/* 기간 묶음: 라벨 + 시작 월 – 종료 월 + (진행 중 체크) + 오류. 원본: style.css 의 .label, .range, .err */
+.label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.req { color: var(--bad); margin-left: 2px; }
+.range { display: flex; align-items: center; gap: 8px; }
+.dash { color: var(--subtle); }
+.ongoing { margin-top: 10px; align-items: center; }
+.err { margin: 6px 0 0; font-size: 13px; line-height: 1.5; color: var(--bad); }

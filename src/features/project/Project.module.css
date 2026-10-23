@@ -1,5 +1,5 @@
 /* S04 프로젝트 입력 화면의 배치.
-   원본: design/project.html 과 style.css 의 .split, .grid-2, .span-2, .range, .row, .num, .actions */
+   원본: design/project.html 과 style.css 의 .split, .grid-2, .span-2, .row, .num, .actions (기간 칸은 공용 PeriodField) */
 
 /* 탭의 "추가" (파란 글씨).
    공용 탭 스타일(.tab)과 우선순위가 같으면 CSS 를 불러오는 순서에 따라 덮일 수 있어서 [href] 를 붙여 한 단계 더 구체적으로 쓴다 */
@@ -13,12 +13,6 @@
 /* 2칸 격자 (제목은 2칸을 다 씀) */
 .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .span2 { grid-column: span 2; }
-
-/* 시작 월 – 종료 월 */
-.range { display: flex; align-items: center; gap: 8px; }
-/* 두 칸이 남은 너비를 반씩 나눈다. min-width: 0 이 없으면 월 선택 칸의 기본 최소 너비 때문에 좁은 화면에서 카드 밖으로 넘친다 */
-.range > input { flex: 1 1 0; min-width: 0; }
-.rangeDash { color: var(--subtle); }
 
 /* 라벨 줄 (기간처럼 라벨이 입력칸 하나에 묶이지 않을 때) */
 .label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }

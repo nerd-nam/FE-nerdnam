@@ -51,6 +51,14 @@ const PATHS = {
       <path d="M21 16l-5-5-9 9" />
     </>
   ),
+  calendar: (
+    <>
+      <rect x="4" y="5" width="16" height="15" rx="2" />
+      <path d="M4 10h16M9 3v4M15 3v4" />
+    </>
+  ),
+  chevronLeft: <path d="M15 6l-6 6 6 6" />,
+  chevronRight: <path d="M9 6l6 6-6 6" />,
   shield: (
     <>
       <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z" />

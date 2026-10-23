@@ -7,7 +7,8 @@ import { useState } from "react";
 import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
 import { Chip } from "@/shared/ui/Chip";
-import { Checkbox, Field, Input, Select } from "@/shared/ui/Field";
+import { Field, Input, Select } from "@/shared/ui/Field";
+import { PeriodField, periodErrors } from "@/shared/ui/PeriodField";
 import { Card } from "@/shared/ui/Card";
 import { Icon } from "@/shared/ui/Icon";
 import { EMPLOYMENT_TYPES, MAX_DUTIES, emptyCareer, formatMonth, type Career, type EmploymentType } from "./mock";
@@ -78,7 +79,9 @@ type CareerFormProps = {
 function CareerForm({ career, mySkills, onSave, onDelete }: CareerFormProps) {
   const [draft, setDraft] = useState(career);
   const [saved, setSaved] = useState(false);
+  const [triedSave, setTriedSave] = useState(false); // 저장을 한 번 누른 뒤부터 기간 오류를 모두 보여 준다
   const isNew = career.id === "new";
+  const periodError = Object.values(periodErrors({ start: draft.start, end: draft.end }, true)).some(Boolean);
 
   // 칸 하나를 바꾸는 함수. 바꾸면 "저장했어요" 표시를 지운다
   function set<K extends keyof Career>(key: K, value: Career[K]) {
@@ -115,26 +118,20 @@ function CareerForm({ career, mySkills, onSave, onDelete }: CareerFormProps) {
             ))}
           </Select>
         </Field>
-        <div>
-          <span className={styles.label}>재직기간</span>
-          <div className={styles.range}>
-            <label htmlFor="start" className="sr-only">
-              시작 월
-            </label>
-            <Input id="start" type="month" value={draft.start} onChange={(e) => set("start", e.target.value)} />
-            <span aria-hidden="true" className={styles.dash}>
-              –
-            </span>
-            <label htmlFor="end" className="sr-only">
-              종료 월
-            </label>
-            {/* 재직 중이면 종료 월을 막는다 (FE-06) */}
-            <Input id="end" type="month" value={draft.end ?? ""} disabled={draft.end === null} onChange={(e) => set("end", e.target.value)} />
-          </div>
-          <Checkbox className={styles.current} checked={draft.end === null} onChange={(e) => set("end", e.target.checked ? null : "")}>
-            재직 중
-          </Checkbox>
-        </div>
+        {/* 재직기간: 직접 입력 + 달력으로 고르기 (Safari 에서 기본 월 선택 칸이 동작하지 않아 공용 칸으로 바꿈).
+            재직 중이면 종료 월을 막는다 (FE-06). 연차 계산에 쓰여서 필수다 (기획서 4.2) */}
+        <PeriodField
+          id="career"
+          label="재직기간"
+          required
+          ongoingLabel="재직 중"
+          value={{ start: draft.start, end: draft.end }}
+          onChange={(period) => {
+            set("start", period.start);
+            set("end", period.end);
+          }}
+          showErrors={triedSave}
+        />
       </div>
 
       <fieldset className={styles.fieldset}>
@@ -195,7 +192,10 @@ function CareerForm({ career, mySkills, onSave, onDelete }: CareerFormProps) {
         )}
         <Button
           onClick={() => {
-            // 빈 줄은 저장하지 않는다. 서버 저장·필수 항목 검증은 ④ 단계
+            // 기간이 틀리면 저장하지 않고 오류를 보여 준다 (연차 계산에 쓰는 값이라)
+            setTriedSave(true);
+            if (periodError) return;
+            // 빈 줄은 저장하지 않는다. 서버 저장·나머지 필수 항목 검증은 ④ 단계
             onSave({ ...draft, duties: draft.duties.filter((d) => d.trim()) });
             setSaved(true);
           }}

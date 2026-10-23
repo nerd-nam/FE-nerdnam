@@ -1,0 +1,45 @@
+/* 월 입력칸 + 달력 고르기. 입력칸 모양은 Field.module.css 의 .input 과 같다 */
+.wrap { position: relative; flex: 1 1 0; min-width: 0; }
+
+.input {
+  width: 100%; min-height: var(--control-h); padding: 10px 44px 10px 14px; /* 오른쪽은 달력 버튼 자리 */
+  border: 1px solid var(--line-strong); border-radius: var(--radius);
+  font: inherit; font-size: 15px; color: var(--ink); background: #fff;
+}
+.input::placeholder { color: #8A909C; }
+.input:disabled { background: var(--surface-muted); color: var(--subtle); }
+.invalid { border-color: var(--bad); background: #FFFBFA; }
+
+/* 입력칸 안 오른쪽의 달력 버튼 */
+.toggle {
+  position: absolute; top: 50%; right: 4px; transform: translateY(-50%);
+  width: 36px; height: 36px; border: 0; border-radius: var(--radius-sm); background: transparent;
+  display: grid; place-items: center; color: var(--subtle); cursor: pointer;
+}
+.toggle:hover { background: var(--surface-muted); color: var(--ink); }
+.toggle:disabled { cursor: not-allowed; opacity: 0.5; }
+
+/* 고르기 상자: 입력칸 바로 아래에 뜬다 */
+.picker {
+  position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; width: 264px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg);
+  box-shadow: 0 8px 28px rgba(21, 23, 28, 0.14); padding: 12px; display: flex; flex-direction: column; gap: 10px;
+}
+.alignEnd { left: auto; right: 0; }
+.yearRow { display: flex; align-items: center; justify-content: space-between; }
+.year { font-size: 15px; font-weight: 700; }
+.yearBtn {
+  width: 36px; height: 36px; border: 0; border-radius: var(--radius-sm); background: transparent;
+  display: grid; place-items: center; color: var(--muted); cursor: pointer;
+}
+.yearBtn:hover { background: var(--surface-muted); }
+.yearBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.months { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.month {
+  min-height: 40px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: #fff;
+  font: inherit; font-size: 14px; color: var(--ink); cursor: pointer;
+}
+.month:hover { background: var(--surface-muted); }
+.month[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.month:disabled { color: #B5BAC4; background: var(--bg); cursor: not-allowed; }

@@ -4,6 +4,7 @@ import { Card } from "@/shared/ui/Card";
 import { Field, Input, Select } from "@/shared/ui/Field";
 import { Icon } from "@/shared/ui/Icon";
 import type { Option, Project } from "./mock";
+import { ProjectPeriod } from "./ProjectPeriod";
 import { RawTextField } from "./RawTextField";
 import { SkillPicker } from "./SkillPicker";
 import styles from "./Project.module.css";
@@ -28,23 +29,8 @@ export function ProjectForm({ project, affiliations, mySkills }: ProjectFormProp
           </Field>
         </div>
 
-        {/* 기간: 라벨 하나에 입력칸이 둘이라 Field 대신 직접 만든다. 각 칸에는 화면에 안 보이는 라벨을 단다 */}
-        <div>
-          <span className={styles.label}>기간</span>
-          <div className={styles.range}>
-            <label htmlFor="period-start" className="sr-only">
-              시작 월
-            </label>
-            <Input id="period-start" name="periodStart" type="month" defaultValue={project.period.start} />
-            <span aria-hidden="true" className={styles.rangeDash}>
-              –
-            </span>
-            <label htmlFor="period-end" className="sr-only">
-              종료 월
-            </label>
-            <Input id="period-end" name="periodEnd" type="month" defaultValue={project.period.end} />
-          </div>
-        </div>
+        {/* 기간: 직접 입력 + 달력으로 고르기 (Safari 에서 기본 월 선택 칸이 동작하지 않아 공용 칸으로 바꿈) */}
+        <ProjectPeriod initial={project.period} />
 
         <div>
           <Field id="affiliation" label="소속">
