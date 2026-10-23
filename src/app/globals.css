@@ -75,5 +75,18 @@ legend { padding: 0; }
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
 
+/* 인쇄(PDF로 내보내기, D-6 결정: 브라우저 인쇄)
+   .print-hide : 인쇄할 때 숨김 (머리글, 단계 표시, 버튼, 오른쪽 칸 …)
+   .print-only : 인쇄할 때만 보임 (예: S09 에서 지금 탭 이름) */
+.print-only { display: none; }
+@media print {
+  .print-hide { display: none !important; }
+  .print-only { display: block; }
+  /* 배경색(검은 핵심 메시지 카드 등)을 그대로 인쇄한다. 브라우저는 기본으로 배경을 빼고 인쇄한다 */
+  body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  /* 카드·목록 한 칸이 쪽 경계에서 반으로 잘리지 않게 한다 */
+  article, li, tr { break-inside: avoid; }
+}
+
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes pulse { 50% { opacity: .5; } }

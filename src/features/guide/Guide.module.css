@@ -3,6 +3,8 @@
    section.… : 공용 Card 의 padding·gap 과 우선순위가 같으면 CSS 를 불러오는 순서에 따라 덮이므로 한 단계 더 구체적으로 쓴다 */
 
 .headActions { display: flex; flex-wrap: wrap; gap: 10px; }
+/* 인쇄할 때만 보이는 지금 탭 이름 (보이고 숨기는 것은 globals.css 의 .print-only) */
+.printTitle { font-size: 20px; font-weight: 700; }
 
 /* 왼쪽 탭 내용 + 오른쪽 근거·방향 바꾸기·평가 */
 .split { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }

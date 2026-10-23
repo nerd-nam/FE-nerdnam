@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Icon } from "@/shared/ui/Icon";
 import { routes } from "@/shared/routes";
+import { cx } from "@/shared/ui/cx";
 import styles from "./Layout.module.css";
 
 const MENU = [
@@ -17,7 +18,8 @@ type HeaderProps = { variant: "start" } | { variant: "onboarding" } | { variant:
 
 export function Header(props: HeaderProps) {
   return (
-    <header className={styles.header}>
+    // print-hide: PDF로 내보내기(인쇄)할 때 머리글은 빼고 내용만 남긴다
+    <header className={cx(styles.header, "print-hide")}>
       <div className={styles.headerInner}>
         {props.variant === "app" ? (
           <div className={styles.headerLeft}>

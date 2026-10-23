@@ -19,7 +19,8 @@ type StepperProps = {
 // 단계 표시: ✓기술스택 — ✓경력 — ③프로젝트 — ④검토·확정
 export function Stepper({ label, steps, current }: StepperProps) {
   return (
-    <nav aria-label={label}>
+    // print-hide: 인쇄할 때 단계 표시는 뺀다
+    <nav aria-label={label} className="print-hide">
       <ol className={styles.stepper}>
         {steps.map((step, index) => {
           const isDone = index < current;

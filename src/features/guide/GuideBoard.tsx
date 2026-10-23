@@ -14,6 +14,7 @@ import { Card } from "@/shared/ui/Card";
 import { Textarea } from "@/shared/ui/Field";
 import { Icon } from "@/shared/ui/Icon";
 import { Rating } from "@/shared/ui/Rating";
+import { cx } from "@/shared/ui/cx";
 import { StateCard, StateText } from "@/shared/ui/StateCard";
 import type { GuideStatus } from "./mock";
 import styles from "./Guide.module.css";
@@ -33,6 +34,8 @@ export function GuideBoard({ tabLabel, initialStatus, regenHint, panel, sources 
   return (
     <div className={styles.split}>
       <section className={styles.main} aria-label={`${tabLabel} 작성 방향`}>
+        {/* 인쇄할 때는 탭 줄이 빠지므로, 어느 탭인지 제목으로 남긴다 */}
+        <h2 className={cx("print-only", styles.printTitle)}>{tabLabel}</h2>
         {status === "done" && panel}
         {status === "generating" && (
           <StateCard tone="wait" title={`${tabLabel} 방향을 만들고 있어요`}>
@@ -50,7 +53,8 @@ export function GuideBoard({ tabLabel, initialStatus, regenHint, panel, sources 
         )}
       </section>
 
-      <aside className={styles.side} aria-label="근거와 방향 바꾸기">
+      {/* 오른쪽 칸(근거·방향 바꾸기·평가)은 인쇄하지 않는다 */}
+      <aside className={cx(styles.side, "print-hide")} aria-label="근거와 방향 바꾸기">
         {sources}
 
         <Card size="sm" aria-labelledby="regen-title" className={styles.sideCard}>

@@ -25,7 +25,8 @@ export function CopyButton({ text, label }: { text: string; label: string }) {
   }
 
   return (
-    <Button size="sm" onClick={copy}>
+    // print-hide: 인쇄한 종이에는 버튼이 필요 없다
+    <Button size="sm" onClick={copy} className="print-hide">
       <Icon name={copied ? "check" : "copy"} size="sm" />
       {/* aria-live: 글자가 "복사됨"으로 바뀌면 스크린리더가 읽어 준다 */}
       <span aria-live="polite">{copied ? "복사됨" : label}</span>
