@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { routes } from "@/shared/routes";
+import { NEW_PROJECT_ID, routes } from "@/shared/routes";
 import { Card } from "@/shared/ui/Card";
 import { Field, Input, Select } from "@/shared/ui/Field";
 import { Icon } from "@/shared/ui/Icon";
 import type { Option, Project } from "./mock";
+import { DeleteProjectButton } from "./DeleteProjectButton";
 import { ProjectPeriod } from "./ProjectPeriod";
 import { RawTextField } from "./RawTextField";
 import { SkillPicker } from "./SkillPicker";
@@ -63,6 +64,13 @@ export function ProjectForm({ project, affiliations, mySkills }: ProjectFormProp
       </div>
 
       {/* 이미지 업로드는 받지 않는다 (ADR-0004, 기획서 F1) */}
+
+      {/* 저장된 프로젝트만 지울 수 있다. 새 프로젝트(/projects/new)는 아직 저장 전이라 지울 것이 없다 */}
+      {project.id !== NEW_PROJECT_ID && (
+        <div className={styles.formFoot}>
+          <DeleteProjectButton title={project.title} status={project.status} />
+        </div>
+      )}
     </Card>
   );
 }

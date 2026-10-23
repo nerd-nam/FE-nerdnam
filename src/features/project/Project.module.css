@@ -36,6 +36,9 @@
 .num { width: 24px; height: 24px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-ink); display: grid; place-items: center; font-size: 12px; font-weight: 700; flex: none; }
 .muted { color: var(--muted); }
 
+/* 양식 맨 아래: 프로젝트 삭제 (S03 경력 양식의 삭제 줄과 같은 모양) */
+.formFoot { display: flex; justify-content: flex-end; padding-top: 8px; border-top: 1px solid var(--line); }
+
 /* 아래쪽 이전 / 다음 버튼 */
 .actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
 
