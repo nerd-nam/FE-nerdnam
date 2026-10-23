@@ -1,0 +1,38 @@
+/* S01 시작하기 화면의 배치.
+   원본: design/index.html 과 style.css 의 .split, .grid-3, .card--lg, .card--sm, .card__desc, .page-meta
+   section.… : 공용 Card 의 padding·gap 과 우선순위가 같으면 CSS 를 불러오는 순서에 따라 덮이므로 한 단계 더 구체적으로 쓴다 */
+
+/* 왼쪽 소개 + 오른쪽 시작하기. 좁으면 시작하기가 아래로 내려간다 */
+.split { display: flex; flex-wrap: wrap; gap: 56px; align-items: flex-start; margin-top: 32px; }
+.intro { flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column; gap: 32px; }
+
+.heroText { display: flex; flex-direction: column; gap: 20px; }
+.eyebrow { font-size: 15px; font-weight: 600; color: var(--accent); }
+.heroTitle { font-size: 46px; line-height: 1.22; font-weight: 700; letter-spacing: -0.02em; }
+.heroDesc { max-width: 560px; font-size: 18px; line-height: 1.65; color: var(--muted); }
+
+/* 서비스 흐름 3단계 */
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+.stepNum { font-size: 13px; font-weight: 700; color: var(--accent); }
+.stepTitle { font-size: 16px; }
+.stepDesc { font-size: 14px; line-height: 1.6; color: var(--muted); }
+.stepMeta { font-size: 13px; color: var(--subtle); }
+
+.promise { display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--muted); }
+.promise svg { color: var(--ok); flex: none; }
+
+/* 시작하기 카드 */
+section.startCard { flex: 1 1 380px; min-width: 0; gap: 20px; scroll-margin-top: 16px; }
+.startHead { display: flex; flex-direction: column; gap: 6px; }
+.startTitle { font-size: 22px; font-weight: 700; }
+.startDesc { font-size: 15px; color: var(--muted); }
+.providers { display: flex; flex-direction: column; gap: 10px; }
+.hint { font-size: 13px; color: var(--subtle); }
+
+@media (max-width: 720px) {
+  .split { gap: 32px; margin-top: 0; }
+  .heroTitle { font-size: 32px; }
+  .heroDesc { font-size: 16px; }
+  .steps { grid-template-columns: minmax(0, 1fr); }
+}
