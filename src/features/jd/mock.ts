@@ -42,6 +42,8 @@ export const MOCK_JDS: Record<string, JdDraft> = {
   j_203: { ...EMPTY_JD, company: "□□랩", position: "백엔드 엔지니어", required: ["Spring 기반 API 개발 경험"] },
   // S09 탭 상태 화면 확인용 공고. 내용은 j_201 과 같다
   j_204: { ...JD_J201, company: "◇◇페이먼츠", position: "백엔드 개발자" },
+  // S10 "작성 중" 확인용: 아직 분석하지 않은 공고 (리포트 없음)
+  j_205: { ...EMPTY_JD, company: "▽▽소프트", position: "백엔드 개발자", required: ["Java 기반 웹 서비스 개발 경력 2년 이상", ""] },
 };
 
 // 저장된 공고 찾기. MOCK_JDS[id] 로 바로 꺼내면 id 가 "constructor" 같은 글자일 때 엉뚱한 값이 나와서 hasOwn 으로 확인한다
