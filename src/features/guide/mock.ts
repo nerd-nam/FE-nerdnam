@@ -28,6 +28,20 @@ export type RewriteRow = { from: string; to: string; requirement: string };
 // 경력기술서 미리보기. 웹이 바꿔 쓰기 표로 만들지, 서버가 줄지는 미정 (C-02 S09 확인할 것 3번)
 export type CareerPreview = { company: string; team: string; period: string; items: { title: string; detail: string }[] };
 
+// 포트폴리오 페이지 흐름 (C-02 S09 포트폴리오 탭, 작업목록 AI-09)
+// kind 는 4종만 온다(cover·text·diagram·chart). 그래도 모르는 값이 오면 웹은 텍스트 그림으로 대신한다 (FE-14).
+// 시각자료 미리보기(visual)는 없다 — 차트·도식은 사용자가 도구로 만든다 (D-1 결정: 안내만)
+export type PageKind = "cover" | "text" | "diagram" | "chart";
+export type PortfolioPage = {
+  order: number; // 몇 쪽인지. 이 순서로 정렬해 보여 준다
+  title: string;
+  hint: string; // 이 쪽에 넣을 내용
+  tool: string; // 제작 도구: 이미지 생성 · 텍스트 · 다이어그램 · 차트
+  kind: string; // PageKind 가 아닐 수도 있어서 string 으로 받는다
+  episodeId: string; // 이 쪽이 쓰는 사례
+};
+export type PageFlow = { projectTitle: string; pages: PortfolioPage[] };
+
 // "이 방향에 쓰인 근거" 목록
 export type GuideSource = { evidence: Evidence; requirementCount: number };
 
@@ -39,7 +53,7 @@ export type Guide = {
   docs: {
     motive: GuideDoc;
     intro: GuideDoc & { coverage: CoverageRow[] };
-    portfolio: GuideDoc;
+    portfolio: GuideDoc & { pageFlow: PageFlow };
     career: GuideDoc & { rewrites: RewriteRow[]; preview: CareerPreview };
   };
   imageRegenHint: string; // 이미지 프롬프트 탭 내용은 FE-15
@@ -99,6 +113,18 @@ const DOCS: Guide["docs"] = {
     ],
     keywords: ["설계 선택의 이유", "Before/After"],
     avoid: ["모든 프로젝트를 시간순으로 나열하기", "생성 이미지에 수치 넣기"],
+    // 디자인 guide-data.js 의 pages. 디자인의 kind "image" 는 C-02·AI-09 의 이름 "cover" 로 바꿨다
+    pageFlow: {
+      projectTitle: "결제 승인 API 성능 개선",
+      pages: [
+        { order: 1, title: "커버", hint: "프로젝트명 · 역할 · 기간", tool: "이미지 생성", kind: "cover", episodeId: "e_501" },
+        { order: 2, title: "문제", hint: "평균 응답 1.2초, 결제 이탈 발생", tool: "텍스트", kind: "text", episodeId: "e_501" },
+        { order: 3, title: "원인", hint: "승인마다 DB 조회 + 동기 후처리 구조", tool: "다이어그램", kind: "diagram", episodeId: "e_501" },
+        { order: 4, title: "해결 설계", hint: "Redis 캐시 · Kafka 비동기 분리, 선택 이유", tool: "다이어그램", kind: "diagram", episodeId: "e_501" },
+        { order: 5, title: "결과", hint: "평균 응답 1.2초 → 0.3초 · 피크 처리량 약 2배", tool: "차트", kind: "chart", episodeId: "e_501" },
+        { order: 6, title: "배운 점", hint: "다음에 다르게 할 것 · [직접 작성]", tool: "텍스트", kind: "text", episodeId: "e_501" },
+      ],
+    },
   },
   career: {
     outlineTitle: "작성 순서",

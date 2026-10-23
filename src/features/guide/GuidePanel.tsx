@@ -8,6 +8,7 @@ import { CopyButton } from "@/shared/ui/CopyButton";
 import { Icon } from "@/shared/ui/Icon";
 import { Table } from "@/shared/ui/Table";
 import type { CareerPreview, CoverageRow, Guide, GuideDoc, RewriteRow } from "./mock";
+import { PageFlow } from "./PageFlow";
 import styles from "./Guide.module.css";
 
 // S09 탭 하나의 내용 (원본: design/assets/js/guide.js 의 render)
@@ -28,12 +29,7 @@ export function GuidePanel({ tab, guide }: { tab: GuideTab; guide: Guide }) {
       <MessageBlock doc={doc} />
       <OutlineBlock doc={doc} />
       {tab === "intro" && <CoverageBlock rows={guide.docs.intro.coverage} />}
-      {tab === "portfolio" && (
-        // 포트폴리오 페이지 흐름(쪽마다 와이어프레임)은 FE-14
-        <Callout tone="sunken" icon="info">
-          포트폴리오 페이지 흐름은 FE-14 에서 만들 예정이에요.
-        </Callout>
-      )}
+      {tab === "portfolio" && <PageFlow flow={guide.docs.portfolio.pageFlow} />}
       {tab === "career" && (
         <>
           <RewriteBlock rows={guide.docs.career.rewrites} />

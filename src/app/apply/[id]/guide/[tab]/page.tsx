@@ -18,7 +18,7 @@ export const metadata: Metadata = { title: "작성 방향" };
 // S09 작성 방향 (주소: /apply/[id]/guide/[tab]) · 작업: FE-13 (지금: ① 모양 · ② 나누기 · ③ 움직임(화면 안에서만), ④ 조회 전)
 // 예: /apply/j_201/guide/intro → id="j_201", tab="intro". 탭마다 주소가 있어 새로고침·공유해도 같은 탭이 열린다.
 // 데이터는 임시 데이터(features/guide/mock.ts): j_201 모두 완료, j_204 지원동기 만드는 중·자기소개 실패.
-// 포트폴리오 페이지 흐름은 FE-14, 이미지 프롬프트 탭과 PDF 내보내기는 FE-15 에서 채운다.
+// 포트폴리오 페이지 흐름은 FE-14(features/guide/PageFlow), 이미지 프롬프트 탭과 PDF 내보내기는 FE-15 에서 채운다.
 //
 // params(주소 속 값)는 요청이 들어와야 알 수 있다. 그래서 값을 읽는 부분만 <Suspense> 로 감싸고,
 // 나머지(단계 표시)는 미리 만들어 두었다가 바로 보여 준다. (Next.js 16 cacheComponents 규칙)

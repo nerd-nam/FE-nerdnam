@@ -1,0 +1,39 @@
+/* S09 포트폴리오 페이지 흐름 (FE-14).
+   원본: design/assets/js/guide.js 의 pagesBlock·thumb 와 style.css 의 .grid-3, .thumb, .wf-* */
+
+.head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+.titleStack { display: flex; flex-direction: column; gap: 4px; }
+.title { font-size: 16px; font-weight: 700; }
+.meta { font-size: 13px; color: var(--subtle); }
+
+/* 쪽 목록: 3칸 격자, 좁으면 1칸 */
+.grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.page { display: flex; flex-direction: column; gap: 10px; }
+.text { display: flex; flex-direction: column; gap: 4px; }
+.pageHead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.pageTitle { font-size: 14px; }
+.tool { font-size: 12px; font-weight: 600; color: var(--subtle); white-space: nowrap; }
+.hint { font-size: 13px; line-height: 1.5; color: var(--muted); }
+
+/* 와이어프레임 틀 (16:10 종이) */
+.thumb { aspect-ratio: 16 / 10; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); padding: 14px; display: flex; flex-direction: column; gap: 7px; }
+.wfTitle { height: 9px; width: 42%; border-radius: 4px; background: var(--line-dashed); }
+.line { height: 6px; border-radius: 3px; background: var(--track); }
+
+/* 커버: 큰 그림 (가운데 동그라미) */
+.image { flex: 1; border-radius: 6px; background: #D5DCF6; display: grid; place-items: center; }
+.image::after { content: ""; width: 34px; height: 34px; border-radius: 50%; background: var(--accent); }
+
+/* 도식: 상자와 연결선 */
+.flow { flex: 1; display: flex; align-items: center; }
+.box { flex: 1; height: 30px; border: 1.5px solid #8C93A3; border-radius: 5px; background: #fff; }
+.boxAccent { border-color: var(--accent); background: var(--accent-soft); }
+.link { width: 14px; height: 1.5px; background: #8C93A3; }
+
+/* 차트: 막대 둘 */
+.chart { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 22px; border-bottom: 1.5px solid #8C93A3; padding: 0 20px; }
+.chart span { width: 30px; border-radius: 4px 4px 0 0; }
+
+@media (max-width: 720px) {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+}
