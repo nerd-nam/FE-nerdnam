@@ -2,7 +2,10 @@
 
 // S02 의 움직이는 부분: 기술 추가 카드 + 추가한 기술 표.
 // "추가한 기술" 목록을 두 카드가 함께 쓰므로(추천 칩의 "추가됨" 표시, 표) 상태를 여기 한곳에 둔다.
+import Link from "next/link";
 import { useState } from "react";
+import { Button } from "@/shared/ui/Button";
+import { Dialog } from "@/shared/ui/Dialog";
 import { Card } from "@/shared/ui/Card";
 import { Chip } from "@/shared/ui/Chip";
 import { Input } from "@/shared/ui/Field";
@@ -19,6 +22,7 @@ import {
   type Category,
   type MySkill,
 } from "./mock";
+import type { SkillUsage } from "./usage";
 import styles from "./Skills.module.css";
 
 // 표준 사전에서 찾기: 이름이나 별칭에 검색어가 들어 있으면 (대소문자 무시). 실제로는 서버 자동완성 API (BE-04)
@@ -28,8 +32,15 @@ function searchDictionary(query: string) {
   return MOCK_DICTIONARY.filter((entry) => [entry.name, ...entry.aliases].some((word) => word.toLowerCase().includes(q))).slice(0, 8);
 }
 
-export function SkillsBoard({ initialSkills }: { initialSkills: MySkill[] }) {
+type SkillsBoardProps = {
+  initialSkills: MySkill[];
+  usage: Record<string, SkillUsage[]>; // 기술 이름 → 쓰는 곳 (경력·프로젝트)
+};
+
+export function SkillsBoard({ initialSkills, usage }: SkillsBoardProps) {
   const [skills, setSkills] = useState(initialSkills);
+  // 지우려 했지만 쓰는 곳이 있어 막힌 기술. 있으면 안내창을 띄운다
+  const [blocked, setBlocked] = useState<string | null>(null);
   const [category, setCategory] = useState<Category>("framework");
   const [query, setQuery] = useState("");
 
@@ -39,6 +50,15 @@ export function SkillsBoard({ initialSkills }: { initialSkills: MySkill[] }) {
   function add(name: string, cat: Category) {
     if (has(name)) return;
     setSkills((prev) => [...prev, { name, category: cat, level: 1 }]);
+  }
+
+  // 경력·프로젝트에서 쓰는 기술은 지우지 않고 어디서 쓰는지 알려 준다 (ADR-0002 Q7, 서버도 409 로 거부)
+  function remove(name: string) {
+    if (usage[name]?.length) {
+      setBlocked(name);
+      return;
+    }
+    setSkills((prev) => prev.filter((s) => s.name !== name));
   }
 
   // 검색어가 있으면 검색 결과, 없으면 고른 카테고리의 추천
@@ -160,8 +180,7 @@ export function SkillsBoard({ initialSkills }: { initialSkills: MySkill[] }) {
                   </div>
                 </td>
                 <td>
-                  {/* 경력·프로젝트에서 쓰는 기술은 서버가 삭제를 거부한다 (ADR-0002 Q7). 그 안내는 ④ 단계에서 */}
-                  <IconButton label={`${skill.name} 삭제`} onClick={() => setSkills((prev) => prev.filter((s) => s.name !== skill.name))}>
+                  <IconButton label={`${skill.name} 삭제`} onClick={() => remove(skill.name)}>
                     <Icon name="x" />
                   </IconButton>
                 </td>
@@ -170,6 +189,22 @@ export function SkillsBoard({ initialSkills }: { initialSkills: MySkill[] }) {
           </tbody>
         </Table>
       </Card>
+
+      <Dialog
+        open={blocked !== null}
+        onClose={() => setBlocked(null)}
+        title={`‘${blocked ?? ""}’ 기술은 지울 수 없어요`}
+        actions={<Button onClick={() => setBlocked(null)}>닫기</Button>}
+      >
+        <p>아래에서 쓰고 있어요. 그곳에서 이 기술을 먼저 빼면 지울 수 있어요.</p>
+        <ul className={styles.usageList}>
+          {(blocked ? usage[blocked] : []).map((u) => (
+            <li key={u.label}>
+              <Link href={u.href}>{u.label}</Link>
+            </li>
+          ))}
+        </ul>
+      </Dialog>
     </>
   );
 }

@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { OnboardingActions } from "@/features/onboarding/OnboardingActions";
 import { MOCK_MY_SKILLS } from "@/features/skills/mock";
 import { SkillsBoard } from "@/features/skills/SkillsBoard";
+import { skillUsageMap } from "@/features/skills/usage";
 import { Page, PageHead } from "@/shared/layout/Page";
 import { routes } from "@/shared/routes";
 import { onboardingSteps } from "@/shared/steps";
@@ -20,7 +21,7 @@ export default function SkillsPage({ searchParams }: PageProps<"/skills">) {
         title="기술스택을 알려주세요"
         desc="공고 문구와 정확히 맞추기 위해 기술명은 표준 이름으로 저장돼요. 예: react.js, 리액트 → React"
       />
-      <SkillsBoard initialSkills={MOCK_MY_SKILLS} />
+      <SkillsBoard initialSkills={MOCK_MY_SKILLS} usage={skillUsageMap()} />
       {/* ?review= 는 요청이 들어와야 알 수 있어서 그 값을 쓰는 버튼 줄만 Suspense 로 감싼다 */}
       <Suspense>
         {searchParams.then((sp) => (

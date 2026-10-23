@@ -33,3 +33,6 @@
 @media (max-width: 720px) {
   .levelDefs { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* 삭제가 막힌 기술의 사용처 목록 (안내창 안) */
+.usageList { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
