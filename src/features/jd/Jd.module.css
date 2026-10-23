@@ -1,0 +1,56 @@
+/* S07 공고 입력 화면의 배치.
+   원본: design/jd.html 과 style.css 의 .split, .grid-2, .span-2, .actions, .num, .count, .err, .req, .label__hint */
+
+/* 오류 요약 · 양식 · 아래 버튼 줄 사이 간격 (화면 본문 간격과 같게) */
+.form { display: flex; flex-direction: column; gap: 24px; }
+
+/* 왼쪽 양식 + 오른쪽 가이드. 화면이 좁으면 가이드가 아래로 내려간다 */
+.split { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+.main { flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.side { flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+
+/* 기본 정보: 2칸 격자 (공고 링크는 2칸을 다 씀) */
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.span2 { grid-column: span 2; }
+
+/* 목록 카드 (필수사항·우대사항·주요 업무·회사 소개) */
+.listCard { gap: 12px; }
+.between { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+.cardTitle { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 700; }
+.cardDesc { font-size: 14px; line-height: 1.6; color: var(--muted); }
+.req { color: var(--bad); }
+.optional { font-size: 14px; font-weight: 400; color: var(--subtle); }
+.meta { font-size: 13px; color: var(--subtle); }
+.tip { font-size: 12px; color: var(--subtle); }
+
+/* 한 줄: 줄 번호 + 입력칸 + 삭제 버튼 */
+.lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.lineRow { display: flex; align-items: center; gap: 8px; }
+.lineNum { flex: none; width: 22px; text-align: right; font-size: 13px; color: var(--subtle); }
+.lineRow > input { flex: 1 1 auto; min-width: 0; }
+.err { margin: 0; font-size: 13px; line-height: 1.5; color: var(--bad); }
+.lineErr { composes: err; margin: 6px 0 0 30px; }
+
+/* 오른쪽 카드 (작성 가이드, 입력 현황) */
+.sideCard { padding: 22px; gap: 14px; }
+.sideTitle { font-size: 16px; font-weight: 700; }
+.guideList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; font-size: 14px; line-height: 1.55; }
+.guideItem { display: flex; align-items: flex-start; gap: 10px; }
+.num { width: 24px; height: 24px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-ink); display: grid; place-items: center; font-size: 12px; font-weight: 700; flex: none; }
+.muted { color: var(--muted); }
+.example { display: flex; flex-direction: column; gap: 6px; background: var(--bg); border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.55; }
+.bad { color: var(--bad); }
+.good { color: var(--ok); }
+
+.status { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; font-size: 14px; }
+.status dt { color: var(--muted); }
+.status dd { margin: 0; font-weight: 700; }
+
+/* 아래쪽 취소 / 적합도 분석하기 */
+.actions { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+.submit { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; }
+
+@media (max-width: 720px) {
+  .grid2 { grid-template-columns: minmax(0, 1fr); }
+  .span2 { grid-column: auto; }
+}
