@@ -3,12 +3,12 @@
 // S08 요건별 판정 목록 + 판정 필터(전체·충족·부분·미충족). 필터를 누르면 목록이 바뀌어서 클라이언트 컴포넌트다.
 import Link from "next/link";
 import { useState } from "react";
-import { routes } from "@/shared/routes";
+import { evidenceHref } from "@/shared/evidence";
 import { VerdictBadge, type Verdict } from "@/shared/ui/Badge";
 import { Card } from "@/shared/ui/Card";
 import { Chip } from "@/shared/ui/Chip";
 import { Icon } from "@/shared/ui/Icon";
-import type { Evidence, MatchResult } from "./mock";
+import type { MatchResult } from "./mock";
 import styles from "./Report.module.css";
 
 type Filter = "all" | Verdict;
@@ -19,11 +19,6 @@ const FILTERS: { value: Filter; label: string }[] = [
   { value: "partial", label: "부분" },
   { value: "unmet", label: "미충족" },
 ];
-
-// 근거를 누르면 갈 곳: 사례 → S05 읽기 모드에서 그 사례 펼침, 기술·경력 → 내 경험 (C-02 S08 확인할 것 2번)
-function evidenceHref(evidence: Evidence) {
-  return evidence.kind === "episode" ? routes.reviewEpisode(evidence.projectId, evidence.episodeId) : routes.library;
-}
 
 export function RequirementList({ results }: { results: MatchResult[] }) {
   const [filter, setFilter] = useState<Filter>("all");

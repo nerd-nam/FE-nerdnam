@@ -1,16 +1,10 @@
 // S08 에서 쓰는 임시 데이터.
 // API(C-03 계약)와 공통 예시 데이터(fixtures/)가 나오면 이 파일 대신 서버에서 받아 온다.
 // 내용은 기획서 7.1 과 design/assets/js/report.js 의 예시를 따랐다.
+import type { Evidence } from "@/shared/evidence";
 import type { Verdict } from "@/shared/ui/Badge";
 
 export type RequirementType = "required" | "preferred";
-
-// 근거 (C-02 S08 조회: 근거 종류 기술·경력·프로젝트·사례, 표시 이름, 원본으로 갈 id)
-// - 사례 근거 → S05 읽기 모드에서 그 사례를 펼쳐 연다 (기획서 v1.17)
-// - 기술·경력 근거 → 지금은 내 경험(S06)으로 간다 (C-02 S08 확인할 것 2번, FE 제안)
-export type Evidence =
-  | { kind: "skill" | "career"; label: string }
-  | { kind: "episode"; label: string; projectId: string; episodeId: string };
 
 // 갭 대응 가이드 (ADR-0003). source: AI 가 만들었는지(ai), AI 가 실패해 판정별 기본 문구로 대신했는지(fallback)
 export type GapGuide = { advice: string; avoid: string; source: "ai" | "fallback" };
@@ -41,11 +35,12 @@ export type Report = {
 
 export const VERDICT_LABEL: Record<Verdict, string> = { met: "충족", partial: "부분 충족", unmet: "미충족" };
 
-const SKILL_SPRING: Evidence = { kind: "skill", label: "기술 · Spring Boot (능숙)" };
-const CAREER_OO: Evidence = { kind: "career", label: "경력 · OO커머스" };
+// S09 임시 데이터도 같은 근거를 쓴다 (features/guide/mock.ts)
+export const SKILL_SPRING: Evidence = { kind: "skill", label: "기술 · Spring Boot (능숙)" };
+export const CAREER_OO: Evidence = { kind: "career", label: "경력 · OO커머스" };
 // 사례 근거는 확정한 프로젝트에만 있다. p_105 는 S05 임시 데이터의 확정 프로젝트 (features/review/mock.ts)
-const EP_PAYMENT: Evidence = { kind: "episode", label: "결제 승인 API 성능 개선", projectId: "p_105", episodeId: "e_501" };
-const EP_BATCH: Evidence = { kind: "episode", label: "정산 배치 쿼리 개선", projectId: "p_103", episodeId: "e_301" };
+export const EP_PAYMENT: Evidence = { kind: "episode", label: "결제 승인 API 성능 개선", projectId: "p_105", episodeId: "e_501" };
+export const EP_BATCH: Evidence = { kind: "episode", label: "정산 배치 쿼리 개선", projectId: "p_103", episodeId: "e_301" };
 
 const RESULTS: MatchResult[] = [
   {
@@ -109,19 +104,23 @@ const RESULTS: MatchResult[] = [
   },
 ];
 
+const REPORT_J201: Report = {
+  jdId: "j_201",
+  company: "OO페이",
+  position: "백엔드 개발자 (결제 플랫폼)",
+  analyzedAt: "2026.10.21",
+  status: "done",
+  diagnosis: "필수 3개 모두 근거 경험이 있어요. 결제 승인 API 개선 경험이 가장 많은 요건(3개)을 뒷받침해요.",
+  results: RESULTS,
+};
+
 // 공고 번호별 리포트. j_202 = 분석 중, j_203 = 분석 실패 (상태 화면 확인용)
+// j_204 = S09 탭 상태 화면(만드는 중·실패) 확인용 공고. 리포트 내용은 j_201 과 같다
 const MOCK_REPORTS: Record<string, Report> = {
-  j_201: {
-    jdId: "j_201",
-    company: "OO페이",
-    position: "백엔드 개발자 (결제 플랫폼)",
-    analyzedAt: "2026.10.21",
-    status: "done",
-    diagnosis: "필수 3개 모두 근거 경험이 있어요. 결제 승인 API 개선 경험이 가장 많은 요건(3개)을 뒷받침해요.",
-    results: RESULTS,
-  },
+  j_201: REPORT_J201,
   j_202: { jdId: "j_202", company: "△△커머스", position: "서버 개발자", analyzedAt: "", status: "analyzing", diagnosis: "", results: [] },
   j_203: { jdId: "j_203", company: "□□랩", position: "백엔드 엔지니어", analyzedAt: "", status: "failed", diagnosis: "", results: [] },
+  j_204: { ...REPORT_J201, jdId: "j_204", company: "◇◇페이먼츠", position: "백엔드 개발자" },
 };
 
 // MOCK_REPORTS[id] 로 바로 꺼내면 id 가 "constructor" 같은 글자일 때 엉뚱한 값이 나와서 hasOwn 으로 확인한다

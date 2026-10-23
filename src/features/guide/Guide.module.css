@@ -1,0 +1,83 @@
+/* S09 작성 방향 화면의 배치.
+   원본: design/guide.html, design/assets/js/guide.js 와 style.css 의 .split, .card--dark, .num, .src, .tag, .paper, .grid-2
+   section.… : 공용 Card 의 padding·gap 과 우선순위가 같으면 CSS 를 불러오는 순서에 따라 덮이므로 한 단계 더 구체적으로 쓴다 */
+
+.headActions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* 왼쪽 탭 내용 + 오른쪽 근거·방향 바꾸기·평가 */
+.split { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+.main { flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.side { flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+section.sideCard { padding: 22px; }
+
+.between { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+.titleStack { display: flex; flex-direction: column; gap: 4px; }
+.cardTitle { font-size: 16px; font-weight: 700; }
+.smallTitle { font-size: 15px; font-weight: 700; }
+.sideTitle { font-size: 16px; font-weight: 700; }
+.meta { font-size: 13px; line-height: 1.6; color: var(--subtle); }
+.muted { color: var(--muted); }
+.strong { font-weight: 600; }
+
+/* 핵심 메시지 (검은 카드) */
+section.message { padding: 24px 26px; gap: 10px; }
+.messageLabel { font-size: 13px; font-weight: 600; color: #B9C2DB; }
+.messageText { font-size: 21px; line-height: 1.5; font-weight: 600; }
+
+/* 문단 구성 */
+section.outline { gap: 4px; }
+section.outline > .between { margin-bottom: 8px; align-items: center; }
+.outlineList { list-style: none; margin: 0; padding: 0; }
+.outlineItem { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 12px; padding: 16px 0; border-top: 1px solid #EEF0F3; }
+.num { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-ink); display: grid; place-items: center; font-size: 13px; font-weight: 700; }
+.outlineBody { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.outlineTitle { font-size: 16px; font-weight: 600; }
+.outlineDesc { font-size: 15px; line-height: 1.65; color: var(--muted); }
+.sources { display: flex; flex-wrap: wrap; gap: 6px; }
+.src {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 10px;
+  border-radius: var(--radius-sm); background: var(--accent-soft); color: var(--accent-ink);
+  font-size: 13px; font-weight: 600; text-decoration: none;
+}
+.src:hover { background: #E0E6FB; color: var(--accent-ink); }
+
+/* 요건 커버리지 표 */
+.kindCell { font-size: 13px; color: var(--muted); }
+.covered, .notCovered { display: inline-flex; align-items: center; gap: 6px; }
+.covered { color: var(--ok); font-weight: 600; }
+.notCovered { color: var(--subtle); }
+
+/* 바꿔 쓰기 표 */
+.rewriteTable { line-height: 1.55; }
+.rewriteTable .arrowCell { padding: 12px 0; color: var(--subtle); }
+
+/* 경력기술서 미리보기: 종이 한 장 */
+.paper { border: 1px solid #D5D9E0; border-radius: 4px; padding: 28px 32px; background: #fff; box-shadow: 0 1px 3px rgba(21, 23, 28, 0.06); display: flex; flex-direction: column; gap: 14px; }
+.paperHead { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding-bottom: 10px; border-bottom: 2px solid var(--ink); }
+.paperCompany { font-size: 17px; font-weight: 700; }
+.paperTeam { font-size: 15px; font-weight: 500; color: var(--muted); }
+.paperPeriod { font-size: 14px; color: var(--muted); }
+.paperList { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 12px; font-size: 15px; line-height: 1.65; }
+.paperItem { font-weight: 600; }
+.paperDetail { font-size: 14px; color: var(--muted); }
+
+/* 강조할 키워드 · 피해야 할 것 */
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.keywords { display: flex; flex-wrap: wrap; gap: 6px; }
+.keyword { display: inline-flex; align-items: center; padding: 5px 12px; border-radius: 999px; background: var(--surface-muted); font-size: 14px; font-weight: 500; }
+.avoidTitle { font-size: 15px; font-weight: 700; color: var(--bad); }
+.avoidList { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.8; }
+
+/* 오른쪽: 근거 목록 */
+.sourceList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
+.sourceItem { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; }
+.sourceLink { font-weight: 600; }
+
+/* 오른쪽: 방향 바꾸기 */
+.regenLabel { font-size: 14px; color: var(--muted); }
+.regenInput { font-size: 14px; }
+
+@media (max-width: 720px) {
+  .grid2 { grid-template-columns: minmax(0, 1fr); }
+  .paper { padding: 20px; }
+}

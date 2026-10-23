@@ -1,5 +1,5 @@
 /* S08 적합도 리포트 화면의 배치.
-   원본: design/report.html 과 style.css 의 .score, .bar-row, .card--dark, .card__label, .src, .split, .state-card, .spin */
+   원본: design/report.html 과 style.css 의 .score, .bar-row, .card--dark, .card__label, .src, .split */
 
 /* 제목 오른쪽 버튼 (공고 수정 · 작성 방향 보기) */
 .headActions { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -56,19 +56,6 @@ section.side { flex: 1 1 320px; min-width: 0; padding: 22px; gap: 16px; }
 .advice { font-size: 14px; line-height: 1.65; }
 .avoid { font-size: 13px; color: var(--subtle); }
 .addProject { font-size: 14px; font-weight: 600; }
-
-/* 분석 중 / 분석 실패 (style.css .state-card) */
-.stateWait, .stateBad { border-radius: var(--radius-lg); padding: 24px; display: flex; flex-direction: column; gap: 14px; }
-.stateWait { background: var(--surface-sunken); }
-.stateBad { background: var(--bad-soft); }
-.stateTitle { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 700; }
-.stateBad .stateTitle { color: var(--bad); }
-.stateText { font-size: 14px; line-height: 1.6; color: var(--muted); }
-
-@keyframes spin { to { transform: rotate(360deg); } }
-.spin { animation: spin 0.9s linear infinite; }
-/* 움직임을 줄이도록 설정한 사용자에게는 돌리지 않는다 */
-@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
 
 @media (max-width: 720px) {
   /* 좁은 화면에서는 판정 배지를 내용 위에 놓는다 */
