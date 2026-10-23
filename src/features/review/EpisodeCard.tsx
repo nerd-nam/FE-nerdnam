@@ -99,6 +99,7 @@ function EpisodeBody({ episode, viewingVersion, pending, bodyId, readOnly, ...on
   const shown = episode.versions[viewingVersion];
   const previous = episode.versions[viewingVersion - 1];
   const resultChanged = previous && previous.result !== shown.result;
+  // 고칠 수 있는 건 검토 중인 사례뿐이다. 확정·제외한 사례는 읽기 전용이고, 고치려면 "다시 검토하기"를 먼저 누른다 (기획서 v1.19)
   const isReviewing = !readOnly && episode.status === "review";
 
   return (
@@ -110,7 +111,7 @@ function EpisodeBody({ episode, viewingVersion, pending, bodyId, readOnly, ...on
             <Tag key={skill}>{skill}</Tag>
           ))}
         </div>
-        {!readOnly && versionNumbers.length > 1 && (
+        {isReviewing && versionNumbers.length > 1 && (
           <Segmented
             label="버전"
             options={versionNumbers.map((v) => ({ value: String(v), label: v === latest ? `v${v} · 최신` : `v${v}` }))}
@@ -121,7 +122,7 @@ function EpisodeBody({ episode, viewingVersion, pending, bodyId, readOnly, ...on
       </div>
 
       {/* 이전 버전을 볼 때만 "이 버전으로 바꾸기" (기획서 v1.11 F2 되돌리기) */}
-      {viewingVersion !== episode.currentVersion && (
+      {isReviewing && viewingVersion !== episode.currentVersion && (
         <div className={styles.olderNote}>
           <span>
             이전 버전(v{viewingVersion})을 보고 있어요. 지금 쓰는 내용은 최신 버전(v{episode.currentVersion})이에요.
@@ -178,26 +179,20 @@ function EpisodeBody({ episode, viewingVersion, pending, bodyId, readOnly, ...on
       {isReviewing &&
         pending.map((question) => <QuestionBox key={question.id} question={question} onResolve={(answer) => on.onResolve(question.id, answer)} />)}
 
-      {!readOnly && (
+      {isReviewing && (
         <div className={styles.epFoot}>
-          {isReviewing ? (
-            <Button variant="ghost" className={styles.dangerText} onClick={on.onExclude}>
-              이 사례 제외
-            </Button>
-          ) : (
-            <span />
-          )}
+          <Button variant="ghost" className={styles.dangerText} onClick={on.onExclude}>
+            이 사례 제외
+          </Button>
           <div className={styles.row}>
             {/* 수정 요청·직접 편집은 서버(AI) 연결이 필요해 ④ 단계에서 붙인다 */}
             <Button>
               <Icon name="refresh" size="sm" />이 사례 수정 요청
             </Button>
             <Button>직접 편집</Button>
-            {isReviewing && (
-              <Button variant="primary" disabled={pending.length > 0} onClick={on.onConfirm}>
-                <Icon name="check" size="sm" bold />이 사례 확정
-              </Button>
-            )}
+            <Button variant="primary" disabled={pending.length > 0} onClick={on.onConfirm}>
+              <Icon name="check" size="sm" bold />이 사례 확정
+            </Button>
           </div>
         </div>
       )}
