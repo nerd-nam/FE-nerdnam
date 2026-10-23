@@ -13,8 +13,9 @@
 .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .span2 { grid-column: span 2; }
 
-/* 목록 카드 (필수사항·우대사항·주요 업무·회사 소개) */
-.listCard { gap: 12px; }
+/* 목록 카드 (필수사항·우대사항·주요 업무·회사 소개)
+   section.… : 공용 Card 의 padding·gap 과 우선순위가 같으면 CSS 를 불러오는 순서에 따라 덮이므로 한 단계 더 구체적으로 쓴다 */
+section.listCard { gap: 12px; }
 .between { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
 .cardTitle { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 700; }
 .cardDesc { font-size: 14px; line-height: 1.6; color: var(--muted); }
@@ -32,7 +33,7 @@
 .lineErr { composes: err; margin: 6px 0 0 30px; }
 
 /* 오른쪽 카드 (작성 가이드, 입력 현황) */
-.sideCard { padding: 22px; gap: 14px; }
+section.sideCard { padding: 22px; gap: 14px; }
 .sideTitle { font-size: 16px; font-weight: 700; }
 .guideList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; font-size: 14px; line-height: 1.55; }
 .guideItem { display: flex; align-items: flex-start; gap: 10px; }
