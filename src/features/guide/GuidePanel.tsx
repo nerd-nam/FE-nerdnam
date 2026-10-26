@@ -1,9 +1,8 @@
-import Link from "next/link";
-import { evidenceHref } from "@/shared/evidence";
 import type { GuideTab } from "@/shared/routes";
 import { Tag } from "@/shared/ui/Badge";
 import { Card, CardDesc } from "@/shared/ui/Card";
 import { CopyButton } from "@/shared/ui/CopyButton";
+import { EvidenceLink } from "@/shared/ui/EvidenceLink";
 import { Icon } from "@/shared/ui/Icon";
 import { Table } from "@/shared/ui/Table";
 import type { CareerPreview, CoverageRow, Guide, GuideDoc, RewriteRow } from "./mock";
@@ -68,10 +67,10 @@ function OutlineBlock({ doc }: { doc: GuideDoc }) {
               {item.sources.length > 0 && (
                 <div className={styles.sources}>
                   {item.sources.map((source) => (
-                    <Link key={source.label} href={evidenceHref(source)} className={styles.src}>
+                    <EvidenceLink key={source.label} evidence={source} className={styles.src}>
                       <Icon name="link" size="sm" />
                       근거 · {source.label}
-                    </Link>
+                    </EvidenceLink>
                   ))}
                 </div>
               )}

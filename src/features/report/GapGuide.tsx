@@ -2,7 +2,7 @@ import Link from "next/link";
 import { NEW_PROJECT_ID, routes } from "@/shared/routes";
 import { Card } from "@/shared/ui/Card";
 import { cx } from "@/shared/ui/cx";
-import { VERDICT_LABEL, type MatchResult } from "./mock";
+import { VERDICT_LABEL, type MatchResult } from "./report";
 import styles from "./Report.module.css";
 
 // S08 오른쪽 갭 대응 가이드: 미충족·부분 충족 요건마다 가이드 + "하지 말 것" (기획서 F5, ADR-0003)

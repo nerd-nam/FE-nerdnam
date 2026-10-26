@@ -1,6 +1,5 @@
-import Link from "next/link";
-import { evidenceHref } from "@/shared/evidence";
 import { Card } from "@/shared/ui/Card";
+import { EvidenceLink } from "@/shared/ui/EvidenceLink";
 import type { GuideSource } from "./mock";
 import styles from "./Guide.module.css";
 
@@ -15,9 +14,9 @@ export function SourcesCard({ sources }: { sources: GuideSource[] }) {
       <ul className={styles.sourceList}>
         {sources.map(({ evidence, requirementCount }) => (
           <li key={evidence.label} className={styles.sourceItem}>
-            <Link href={evidenceHref(evidence)} className={styles.sourceLink}>
+            <EvidenceLink evidence={evidence} className={styles.sourceLink}>
               {evidence.label}
-            </Link>
+            </EvidenceLink>
             <span className={styles.meta}>요건 {requirementCount}개</span>
           </li>
         ))}

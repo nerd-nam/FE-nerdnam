@@ -1,14 +1,13 @@
 "use client";
 
 // S08 요건별 판정 목록 + 판정 필터(전체·충족·부분·미충족). 필터를 누르면 목록이 바뀌어서 클라이언트 컴포넌트다.
-import Link from "next/link";
 import { useState } from "react";
-import { evidenceHref } from "@/shared/evidence";
 import { VerdictBadge, type Verdict } from "@/shared/ui/Badge";
 import { Card } from "@/shared/ui/Card";
 import { Chip } from "@/shared/ui/Chip";
+import { EvidenceLink } from "@/shared/ui/EvidenceLink";
 import { Icon } from "@/shared/ui/Icon";
-import type { MatchResult } from "./mock";
+import type { MatchResult } from "./report";
 import styles from "./Report.module.css";
 
 type Filter = "all" | Verdict;
@@ -51,14 +50,15 @@ export function RequirementList({ results }: { results: MatchResult[] }) {
                 <span className={styles.kind}>{r.type === "required" ? "필수" : "우대"}</span>
                 <strong>{r.text}</strong>
               </div>
-              <p className={styles.reason}>{r.reason}</p>
+              {r.reason && <p className={styles.reason}>{r.reason}</p>}
               {r.evidence.length > 0 && (
                 <div className={styles.sources}>
-                  {r.evidence.map((e) => (
-                    <Link key={e.label} href={evidenceHref(e)} className={styles.src}>
+                  {/* 이름이 같은 근거가 있을 수 있어 순서로 구분한다 (목록은 바뀌지 않는다) */}
+                  {r.evidence.map((e, i) => (
+                    <EvidenceLink key={i} evidence={e} className={styles.src} deletedClassName={styles.srcDeleted}>
                       <Icon name="link" size="sm" />
                       {e.label}
-                    </Link>
+                    </EvidenceLink>
                   ))}
                 </div>
               )}

@@ -1,9 +1,15 @@
 // S09 에서 쓰는 임시 데이터.
 // API(C-03 계약)와 공통 예시 데이터(fixtures/)가 나오면 이 파일 대신 서버에서 받아 온다.
 // 내용은 기획서 7.2 와 design/assets/js/guide-data.js 를 따랐다.
-import { CAREER_OO, EP_BATCH, EP_PAYMENT, type RequirementType } from "@/features/report/mock";
+import type { RequirementType } from "@/features/report/report";
 import type { Evidence } from "@/shared/evidence";
 import type { GuideTab } from "@/shared/routes";
+
+// 근거 예시 (S08 이 서버에 연결되기 전 S08 임시 데이터에 있던 것)
+const CAREER_OO: Evidence = { kind: "career", label: "경력 · OO커머스" };
+// 사례 근거는 확정한 프로젝트에만 있다. p_105·p_103 은 예전 S05 임시 데이터의 확정 프로젝트
+const EP_PAYMENT: Evidence = { kind: "episode", label: "결제 승인 API 성능 개선", projectId: "p_105", episodeId: "e_501" };
+const EP_BATCH: Evidence = { kind: "episode", label: "정산 배치 쿼리 개선", projectId: "p_103", episodeId: "e_301" };
 
 // 탭마다 따로 만든다: 만드는 중 / 완료 / 실패 (C-02 S09 확인할 것 2번, 작업 상태 조회)
 export type GuideStatus = "done" | "generating" | "failed";

@@ -52,6 +52,9 @@ section.side { flex: 1 1 320px; min-width: 0; padding: 22px; gap: 16px; }
   font-size: 13px; font-weight: 600; text-decoration: none;
 }
 .src:hover { background: #E0E6FB; color: var(--accent-ink); }
+/* 지워진 경험: 링크가 아니라서 흐리게 (C-02 S08 확인할 것 7) */
+.srcDeleted, .srcDeleted:hover { background: var(--line); color: var(--subtle); }
+.srcDeleted svg { display: none; }
 
 /* 갭 대응 가이드 한 묶음. 묶음 사이에 줄을 긋는다 */
 .gap { display: flex; flex-direction: column; gap: 8px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
