@@ -1,65 +1,111 @@
 "use client";
 
-// S02 의 움직이는 부분: 기술 추가 카드 + 추가한 기술 표.
+// S02 의 움직이는 부분: 기술 추가 카드 + 추가한 기술 표 + 아래 이전/다음 버튼.
 // "추가한 기술" 목록을 두 카드가 함께 쓰므로(추천 칩의 "추가됨" 표시, 표) 상태를 여기 한곳에 둔다.
+//
+// 저장 (FE 결정 2026-10-26): 추가·숙련도·삭제는 화면에서만 바꿔 두고, 화면을 떠날 때(이전·다음·검토로 돌아가기·
+// 머리글 "저장하고 나중에 하기") 서버에 한 번에 보낸다. 마지막으로 저장한 상태(saved)와 지금 목록을 비교해
+// 지운 것 → DELETE, 새로 넣은 것 → POST, 숙련도가 바뀐 것 → PATCH 를 차례로 보낸다.
+// - 경력·프로젝트에서 쓰는 기술은 서버가 삭제를 거부한다(409 IN_USE + 사용처). 그 기술을 목록에 되돌리고 어디서 쓰는지 안내창을 띄운다
+// - 저장하지 않고 새로고침·탭 닫기를 하면 브라우저가 경고한다
 import Link from "next/link";
-import { useState } from "react";
-import { Button } from "@/shared/ui/Button";
-import { Dialog } from "@/shared/ui/Dialog";
+import { useEffect, useState } from "react";
+import { api } from "@/shared/api/client";
+import { isProblem, problemMessage } from "@/shared/api/problem";
+import { useRegisterSave } from "@/shared/layout/PendingSave";
+import { routes } from "@/shared/routes";
+import { Button, IconButton } from "@/shared/ui/Button";
+import { Callout, Note } from "@/shared/ui/Callout";
 import { Card } from "@/shared/ui/Card";
 import { Chip } from "@/shared/ui/Chip";
+import { cx } from "@/shared/ui/cx";
+import { Dialog } from "@/shared/ui/Dialog";
 import { Input } from "@/shared/ui/Field";
-import { IconButton } from "@/shared/ui/Button";
 import { Icon } from "@/shared/ui/Icon";
 import { Table } from "@/shared/ui/Table";
-import { cx } from "@/shared/ui/cx";
 import { useFocusAfterRender } from "@/shared/useFocusAfterRender";
-import {
-  CATEGORIES,
-  categoryLabel,
-  LEVELS,
-  MOCK_DICTIONARY,
-  MOCK_SUGGESTIONS,
-  type Category,
-  type MySkill,
-} from "./mock";
-import type { SkillUsage } from "./usage";
+import { OnboardingActions } from "@/features/onboarding/OnboardingActions";
+import { CATEGORIES, categoryLabel, LEVELS, SUGGESTION_COUNT, type CatalogSkill, type Category, type MySkill } from "./skill";
 import styles from "./Skills.module.css";
 
-// 표준 사전에서 찾기: 이름이나 별칭에 검색어가 들어 있으면 (대소문자 무시). 실제로는 서버 자동완성 API (BE-04)
-function searchDictionary(query: string) {
-  const q = query.trim().toLowerCase();
-  if (!q) return [];
-  return MOCK_DICTIONARY.filter((entry) => [entry.name, ...entry.aliases].some((word) => word.toLowerCase().includes(q))).slice(0, 8);
-}
+// 서버에 마지막으로 저장된 내 기술 (기술 이름 → 서버 번호·카테고리·숙련도)
+type Saved = Record<string, Required<Pick<MySkill, "id">> & Omit<MySkill, "id">>;
+
+// 지우려 했지만 서버가 거부한 기술과 그 사용처
+type Blocked = { name: string; usages: { label: string; href: string }[] };
 
 type SkillsBoardProps = {
   initialSkills: MySkill[];
-  usage: Record<string, SkillUsage[]>; // 기술 이름 → 쓰는 곳 (경력·프로젝트)
+  firstCategory: Category;
+  firstCatalog: CatalogSkill[]; // 첫 카테고리의 표준 기술 목록 (페이지가 서버에서 가져옴)
+  reviewId?: string; // S05 검토 중에 왔으면 그 프로젝트 번호 (아래 버튼이 "검토로 돌아가기"가 됨)
 };
 
-export function SkillsBoard({ initialSkills, usage }: SkillsBoardProps) {
+function toSaved(skills: MySkill[]): Saved {
+  return Object.fromEntries(skills.filter((s) => s.id !== undefined).map((s) => [s.name, { ...s, id: s.id! }]));
+}
+
+export function SkillsBoard({ initialSkills, firstCategory, firstCatalog, reviewId }: SkillsBoardProps) {
   const [skills, setSkills] = useState(initialSkills);
-  // 지우려 했지만 쓰는 곳이 있어 막힌 기술. 있으면 안내창을 띄운다
-  const [blocked, setBlocked] = useState<string | null>(null);
+  const [saved, setSaved] = useState(() => toSaved(initialSkills));
+  const [blocked, setBlocked] = useState<Blocked[] | null>(null); // 있으면 "지울 수 없어요" 안내창
+  const [saveError, setSaveError] = useState<string | null>(null);
   const focusAfter = useFocusAfterRender();
-  const [category, setCategory] = useState<Category>("framework");
+
+  const [category, setCategory] = useState(firstCategory);
+  // 카테고리별 표준 기술 목록. 처음 카테고리는 서버에서 받아 왔고, 나머지는 처음 누를 때 브라우저에서 가져온다
+  const [catalogs, setCatalogs] = useState<Partial<Record<Category, CatalogSkill[] | "error">>>({ [firstCategory]: firstCatalog });
   const [query, setQuery] = useState("");
+  // 마지막으로 받은 검색 결과. q 가 지금 검색어와 다르면 아직 찾는 중이다
+  const [search, setSearch] = useState<{ q: string; results: CatalogSkill[] | "error" } | null>(null);
 
   const has = (name: string) => skills.some((s) => s.name === name);
 
-  // 새 기술은 "학습 중"(1)으로 추가한다 (디자인 skills.js 와 같음). 숙련도는 표에서 바꾼다
-  function add(name: string, cat: Category) {
-    if (has(name)) return;
-    setSkills((prev) => [...prev, { name, category: cat, level: 1 }]);
+  // 마지막 저장과 비교한 변경
+  const removed = Object.values(saved).filter((s) => !has(s.name));
+  const added = skills.filter((s) => !saved[s.name]);
+  const changed = skills.filter((s) => saved[s.name] && saved[s.name].level !== s.level);
+  const dirty = removed.length + added.length + changed.length > 0;
+
+  // 저장하지 않은 변경이 있으면 새로고침·탭 닫기 전에 브라우저가 확인을 묻는다
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+
+  // 검색창: 입력이 0.2초 멈추면 서버 자동완성에 묻는다. 그 사이 새로 입력하면 앞의 요청 결과는 버린다
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) return;
+    let stale = false;
+    const timer = setTimeout(() => {
+      api.GET("/api/skills", { params: { query: { query: q } } }).then(({ data }) => {
+        if (stale) return;
+        setSearch({ q, results: data ? data.map((s) => ({ name: s.name, category: s.category })) : "error" });
+      });
+    }, 200);
+    return () => {
+      stale = true;
+      clearTimeout(timer);
+    };
+  }, [query]);
+
+  async function chooseCategory(next: Category) {
+    setCategory(next);
+    if (catalogs[next] && catalogs[next] !== "error") return;
+    const { data } = await api.GET("/api/skills", { params: { query: { category: next } } });
+    setCatalogs((prev) => ({ ...prev, [next]: data ? data.map((s) => ({ name: s.name, category: s.category })) : "error" }));
   }
 
-  // 경력·프로젝트에서 쓰는 기술은 지우지 않고 어디서 쓰는지 알려 준다 (ADR-0002 Q7, 서버도 409 로 거부)
+  // 새 기술은 "학습 중"(1)으로 추가한다 (디자인 skills.js 와 같음). 저장 전에 지웠다가 다시 넣으면 원래 상태로 돌아온다
+  function add(name: string, cat: Category) {
+    if (has(name)) return;
+    setSkills((prev) => [...prev, saved[name] ?? { name, category: cat, level: 1 }]);
+  }
+
   function remove(name: string) {
-    if (usage[name]?.length) {
-      setBlocked(name);
-      return;
-    }
     // 지운 뒤 다음 줄(마지막이었으면 윗줄)의 삭제 버튼으로, 다 지웠으면 검색칸으로 커서를 옮긴다 (FE-16)
     const index = skills.findIndex((s) => s.name === name);
     const left = skills.length - 1;
@@ -67,11 +113,61 @@ export function SkillsBoard({ initialSkills, usage }: SkillsBoardProps) {
     setSkills((prev) => prev.filter((s) => s.name !== name));
   }
 
-  // 검색어가 있으면 검색 결과, 없으면 고른 카테고리의 추천
-  const results = searchDictionary(query);
-  const chips = query.trim()
-    ? results.map((entry) => ({ name: entry.name, category: entry.category }))
-    : MOCK_SUGGESTIONS[category].map((name) => ({ name, category }));
+  // 바꾼 것을 서버에 보낸다. 모두 성공하면 true. 하나라도 안 되면 된 것까지만 저장된 것으로 기억하고 false
+  async function save() {
+    setSaveError(null);
+    const next = { ...saved };
+    const refused: Blocked[] = [];
+    let failure: string | null = null;
+    const fail = (error: unknown) => (failure ??= problemMessage(error, "기술스택을 저장하지 못했어요. 잠시 뒤 다시 시도해 주세요."));
+
+    for (const s of removed) {
+      const { error, response } = await api.DELETE("/api/me/skills/{userSkillId}", { params: { path: { userSkillId: s.id } } });
+      if (!error || response.status === 404) delete next[s.name]; // 404: 이미 지워져 있음
+      else if (response.status === 409 && isProblem(error) && error.usages) {
+        refused.push({
+          name: s.name,
+          usages: error.usages.map((u) =>
+            u.type === "career"
+              ? { label: `${u.name} 경력`, href: routes.career } // 경력 화면은 주소로 특정 경력을 열 수 없다
+              : { label: `${u.name} 프로젝트`, href: routes.project(String(u.id)) },
+          ),
+        });
+      } else fail(error);
+    }
+    for (const s of added) {
+      const { data, error } = await api.POST("/api/me/skills", { body: { name: s.name, category: s.category, level: s.level } });
+      if (data) next[s.name] = { id: data.id, name: data.name, category: data.category, level: data.level };
+      else fail(error);
+    }
+    for (const s of changed) {
+      const { data, error } = await api.PATCH("/api/me/skills/{userSkillId}", {
+        params: { path: { userSkillId: saved[s.name].id } },
+        body: { level: s.level },
+      });
+      if (data) next[s.name] = { ...next[s.name], level: data.level };
+      else fail(error);
+    }
+
+    setSaved(next);
+    // 새로 저장한 기술에 서버 번호를 붙이고, 지우지 못한 기술은 목록 끝에 되돌린다
+    setSkills((prev) => [
+      ...prev.map((s) => (next[s.name] ? { ...s, id: next[s.name].id } : s)),
+      ...refused.filter((b) => !prev.some((s) => s.name === b.name)).map((b) => next[b.name]),
+    ]);
+    if (refused.length) setBlocked(refused);
+    if (failure) setSaveError(failure);
+    return !refused.length && !failure;
+  }
+
+  useRegisterSave(save); // 머리글 "저장하고 나중에 하기"도 이 저장을 쓴다
+
+  // 검색어가 있으면 검색 결과, 없으면 고른 카테고리의 앞 몇 개를 추천 칩으로
+  const q = query.trim();
+  const searching = q !== "" && search?.q !== q;
+  const catalog = catalogs[category];
+  const list = q ? (searching ? [] : search!.results) : catalog === undefined ? [] : catalog === "error" ? "error" : catalog.slice(0, SUGGESTION_COUNT);
+  const loading = q ? searching : catalog === undefined;
 
   return (
     <>
@@ -82,7 +178,7 @@ export function SkillsBoard({ initialSkills, usage }: SkillsBoardProps) {
 
         <div className={styles.row} role="group" aria-label="카테고리">
           {CATEGORIES.map((c) => (
-            <Chip key={c.value} pressed={c.value === category} onClick={() => setCategory(c.value)}>
+            <Chip key={c.value} pressed={c.value === category} onClick={() => chooseCategory(c.value)}>
               {c.label}
             </Chip>
           ))}
@@ -104,13 +200,19 @@ export function SkillsBoard({ initialSkills, usage }: SkillsBoardProps) {
 
         <div className={styles.chipGroup}>
           <span className={styles.groupLabel} aria-live="polite">
-            {query.trim() ? `"${query.trim()}" 검색 결과 ${results.length}개` : `${categoryLabel(category)}에서 자주 쓰는 기술`}
+            {q
+              ? searching
+                ? `"${q}" 찾는 중…`
+                : `"${q}" 검색 결과 ${list === "error" ? 0 : list.length}개`
+              : `${categoryLabel(category)}에서 자주 쓰는 기술`}
           </span>
-          {chips.length === 0 ? (
+          {list === "error" ? (
+            <p className={styles.empty}>기술 목록을 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요.</p>
+          ) : loading ? null : list.length === 0 ? (
             <p className={styles.empty}>표준 사전에서 찾지 못했어요. 다른 이름으로 검색해 보세요.</p>
           ) : (
             <div className={styles.row}>
-              {chips.map((chip) =>
+              {list.map((chip) =>
                 has(chip.name) ? (
                   <Chip key={chip.name} variant="added" disabled>
                     <Icon name="check" size="sm" bold />
@@ -194,22 +296,40 @@ export function SkillsBoard({ initialSkills, usage }: SkillsBoardProps) {
             ))}
           </tbody>
         </Table>
+        <Note>바꾼 내용은 아래 버튼으로 이 화면을 나갈 때 한 번에 저장돼요.</Note>
       </Card>
+
+      {saveError && (
+        <Callout tone="bad" icon="alert" role="alert">
+          {saveError}
+        </Callout>
+      )}
+      <OnboardingActions
+        prev={{ href: routes.start }}
+        next={{ href: routes.career, label: "다음: 경력 입력" }}
+        reviewId={reviewId}
+        save={save}
+      />
 
       <Dialog
         open={blocked !== null}
         onClose={() => setBlocked(null)}
-        title={`‘${blocked ?? ""}’ 기술은 지울 수 없어요`}
+        title={blocked?.length === 1 ? `‘${blocked[0].name}’ 기술은 지울 수 없어요` : "지울 수 없는 기술이 있어요"}
         actions={<Button onClick={() => setBlocked(null)}>닫기</Button>}
       >
-        <p>아래에서 쓰고 있어요. 그곳에서 이 기술을 먼저 빼면 지울 수 있어요.</p>
-        <ul className={styles.usageList}>
-          {(blocked ? usage[blocked] : []).map((u) => (
-            <li key={u.label}>
-              <Link href={u.href}>{u.label}</Link>
-            </li>
-          ))}
-        </ul>
+        <p>아래에서 쓰고 있어서 목록에 다시 넣었어요. 그곳에서 이 기술을 먼저 빼면 지울 수 있어요. 나머지 변경은 저장했어요.</p>
+        {blocked?.map((b) => (
+          <div key={b.name}>
+            {blocked.length > 1 && <strong>{b.name}</strong>}
+            <ul className={styles.usageList}>
+              {b.usages.map((u) => (
+                <li key={u.href + u.label}>
+                  <Link href={u.href}>{u.label}</Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </Dialog>
     </>
   );

@@ -1,8 +1,11 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { data, serverApi } from "@/shared/api/server";
 import { Icon } from "@/shared/ui/Icon";
 import { routes } from "@/shared/routes";
 import { cx } from "@/shared/ui/cx";
 import styles from "./Layout.module.css";
+import { SaveLaterLink } from "./PendingSave";
 
 const MENU = [
   { area: "library", label: "내 경험", href: routes.library },
@@ -43,18 +46,32 @@ export function Header(props: HeaderProps) {
           </a>
         )}
         {props.variant === "onboarding" && (
-          <Link className={styles.headerLink} href={routes.library}>
+          // 화면에 저장하지 않은 변경이 있으면 저장한 뒤 내 경험으로 간다 (PendingSave.tsx)
+          <SaveLaterLink className={styles.headerLink} href={routes.library}>
             저장하고 나중에 하기
-          </Link>
+          </SaveLaterLink>
         )}
         {props.variant === "app" && (
-          // TODO: 로그인(FE-04)을 만들면 사용자 이름 첫 글자와 계정 메뉴를 붙인다. 지금은 디자인의 예시 글자.
-          <button type="button" className={styles.avatar} aria-label="계정 메뉴">
-            김
-          </button>
+          // 내 정보는 로그인 쿠키로 서버에 물어야 해서 이 동그라미만 Suspense 로 감싼다. 기다리는 동안은 빈 동그라미
+          <Suspense fallback={<span className={styles.avatar} aria-hidden="true" />}>
+            <Avatar />
+          </Suspense>
         )}
       </div>
     </header>
+  );
+}
+
+// 사용자 이름 첫 글자 (GET /api/me 의 displayName, 없으면 이메일 첫 글자).
+// 계정 메뉴(로그아웃·탈퇴)의 내용은 아직 정하지 않았다 (C-02 공통 확인할 것 4) — 지금은 동그라미만.
+async function Avatar() {
+  const api = await serverApi(routes.library); // 내 정보 조회는 약관 동의 전에도 되므로 돌아올 주소는 쓰이지 않는다
+  const me = data(await api.GET("/api/me"));
+  const name = me.displayName ?? me.email ?? "";
+  return (
+    <button type="button" className={styles.avatar} aria-label={name ? `${name} 계정 메뉴` : "계정 메뉴"}>
+      {name.trim().charAt(0).toUpperCase()}
+    </button>
   );
 }
 
