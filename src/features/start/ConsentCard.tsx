@@ -7,15 +7,16 @@
 // - 동의하지 않고 나가기: 로그아웃(POST /api/auth/logout) → S01
 // - 탈퇴하기: 확인창 → 탈퇴(DELETE /api/me, 내 데이터 즉시 삭제) → S01
 // 서버 요청은 모두 브라우저에서 보낸다. 실패하면 서버가 준 문장을 카드(또는 확인창) 안에 보여 준다.
+// 나가기(로그아웃)·탈퇴는 머리글 계정 메뉴와 같은 코드를 쓴다 (shared/api/account.ts, WithdrawDialog)
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { api, resetCsrf } from "@/shared/api/client";
+import { logout } from "@/shared/api/account";
+import { api } from "@/shared/api/client";
 import { problemMessage } from "@/shared/api/problem";
-import { routes } from "@/shared/routes";
+import { WithdrawDialog } from "@/shared/layout/WithdrawDialog";
 import { Button } from "@/shared/ui/Button";
 import { Callout } from "@/shared/ui/Callout";
 import { Card } from "@/shared/ui/Card";
-import { Dialog } from "@/shared/ui/Dialog";
 import { Checkbox } from "@/shared/ui/Field";
 import styles from "./Start.module.css";
 
@@ -28,9 +29,8 @@ export function ConsentCard({ termsVersion, next }: ConsentCardProps) {
   const router = useRouter();
   const [agreed, setAgreed] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
-  const [pending, setPending] = useState<"agree" | "leave" | "withdraw" | null>(null); // 서버 답을 기다리는 버튼
+  const [pending, setPending] = useState<"agree" | "leave" | null>(null); // 서버 답을 기다리는 버튼
   const [error, setError] = useState<string | null>(null); // 동의·나가기 실패 문장
-  const [withdrawError, setWithdrawError] = useState<string | null>(null); // 탈퇴 실패 문장 (확인창 안)
 
   async function agree() {
     setPending("agree");
@@ -44,21 +44,9 @@ export function ConsentCard({ termsVersion, next }: ConsentCardProps) {
   async function leave() {
     setPending("leave");
     setError(null);
-    const { error } = await api.POST("/api/auth/logout");
+    const message = await logout(); // 성공하면 S01 로 페이지가 바뀐다
     setPending(null);
-    if (error) return setError(problemMessage(error, "나가지 못했어요. 잠시 뒤 다시 시도해 주세요."));
-    resetCsrf(); // 로그아웃 뒤에는 CSRF 토큰을 새로 받는다 (C-03)
-    router.replace(routes.start);
-  }
-
-  async function withdraw() {
-    setPending("withdraw");
-    setWithdrawError(null);
-    const { error } = await api.DELETE("/api/me");
-    setPending(null);
-    if (error) return setWithdrawError(problemMessage(error, "탈퇴하지 못했어요. 잠시 뒤 다시 시도해 주세요."));
-    resetCsrf();
-    router.replace(routes.start);
+    setError(message);
   }
 
   return (
@@ -114,36 +102,7 @@ export function ConsentCard({ termsVersion, next }: ConsentCardProps) {
         </button>
       </p>
 
-      <Dialog
-        open={withdrawing}
-        onClose={() => {
-          setWithdrawing(false);
-          setWithdrawError(null);
-        }}
-        title="탈퇴할까요?"
-        actions={
-          <>
-            <Button
-              onClick={() => {
-                setWithdrawing(false);
-                setWithdrawError(null);
-              }}
-            >
-              취소
-            </Button>
-            <Button variant="danger" disabled={pending !== null} onClick={withdraw}>
-              {pending === "withdraw" ? "탈퇴하는 중…" : "탈퇴"}
-            </Button>
-          </>
-        }
-      >
-        {withdrawError && (
-          <Callout tone="bad" icon="alert" role="alert">
-            {withdrawError}
-          </Callout>
-        )}
-        <p>기술스택·경력·프로젝트와 사례, 공고·리포트·작성 방향이 모두 바로 삭제되고 되돌릴 수 없어요.</p>
-      </Dialog>
+      <WithdrawDialog open={withdrawing} onClose={() => setWithdrawing(false)} />
     </Card>
   );
 }

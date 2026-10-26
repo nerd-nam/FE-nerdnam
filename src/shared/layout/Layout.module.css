@@ -26,6 +26,31 @@
   width: 40px; height: 40px; border-radius: 50%; border: 0; cursor: pointer;
   background: #DDE3FA; color: var(--accent-ink); font-weight: 700;
 }
+.avatar[aria-expanded="true"] { box-shadow: 0 0 0 3px var(--focus); }
+
+/* 계정 메뉴 (우리 디자인, design/assets/css/style.css .account) — 동그라미 오른쪽 끝에 맞춰 아래로 열린다 */
+.account { position: relative; }
+.accountPanel {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 20;
+  width: max-content; min-width: 220px; max-width: calc(100vw - 32px);
+  padding: 8px; display: flex; flex-direction: column; gap: 2px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg);
+  box-shadow: 0 12px 32px rgba(21, 23, 28, 0.14);
+}
+.accountPanel[hidden] { display: none; }
+.accountWho {
+  display: flex; flex-direction: column; gap: 2px; padding: 8px 12px 12px; margin-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+}
+.accountName { font-size: 15px; font-weight: 600; }
+.accountEmail { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.accountItem {
+  display: flex; align-items: center; min-height: 44px; padding: 0 12px; border: 0; border-radius: var(--radius-sm);
+  background: transparent; color: var(--ink); font: inherit; font-weight: 500; text-align: left; cursor: pointer;
+}
+.accountItem:hover { background: var(--surface-muted); }
+.accountItem:disabled { color: var(--subtle); cursor: default; background: transparent; }
+.accountDanger { color: var(--bad); }
 
 /* 본문 */
 .page {

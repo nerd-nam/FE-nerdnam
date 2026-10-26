@@ -5,6 +5,7 @@ import { Icon } from "@/shared/ui/Icon";
 import { routes } from "@/shared/routes";
 import { cx } from "@/shared/ui/cx";
 import styles from "./Layout.module.css";
+import { AccountMenu } from "./AccountMenu";
 import { SaveLaterLink } from "./PendingSave";
 
 const MENU = [
@@ -62,17 +63,11 @@ export function Header(props: HeaderProps) {
   );
 }
 
-// 사용자 이름 첫 글자 (GET /api/me 의 displayName, 없으면 이메일 첫 글자).
-// 계정 메뉴(로그아웃·탈퇴)의 내용은 아직 정하지 않았다 (C-02 공통 확인할 것 4) — 지금은 동그라미만.
+// 계정 메뉴: 내 정보(GET /api/me)는 서버에서 가져오고, 여닫기·로그아웃·탈퇴는 AccountMenu(브라우저)가 한다
 async function Avatar() {
   const api = await serverApi(routes.library); // 내 정보 조회는 약관 동의 전에도 되므로 돌아올 주소는 쓰이지 않는다
   const me = data(await api.GET("/api/me"));
-  const name = me.displayName ?? me.email ?? "";
-  return (
-    <button type="button" className={styles.avatar} aria-label={name ? `${name} 계정 메뉴` : "계정 메뉴"}>
-      {name.trim().charAt(0).toUpperCase()}
-    </button>
-  );
+  return <AccountMenu name={me.displayName} email={me.email} />;
 }
 
 function Brand() {
