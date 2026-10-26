@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
+  // 빌드할 때 실행에 필요한 파일만 .next/standalone 에 모은다 (Docker 이미지를 작게, Dockerfile 참고)
+  output: "standalone",
 
   // 화면을 그리기 전에 다른 주소로 보내는 규칙
   async redirects() {

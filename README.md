@@ -29,6 +29,24 @@ npm run dev:be     # = API_ORIGIN=http://localhost:8080 npm run dev
 - 로그인은 진짜 구글·카카오 화면으로 간다. BE `.env`에 로그인 키(`GOOGLE_CLIENT_ID` 등)가 있어야 끝까지 된다. 키가 없으면 구글이 막는다.
 - BE 주소가 다르면 `API_ORIGIN=주소 npm run dev`로 직접 준다.
 
+### 3. 웹도 Docker로 — BE·AI 팀원이 웹을 써 볼 때
+
+웹 완성본(`next build`)을 Docker로 띄워, Docker로 띄운 BE에 붙인다. 코드를 고치면 다시 빌드해야 하니 FE 개발은 2번으로 한다.
+
+```bash
+# 1. BE 폴더에서 BE 먼저 (BE·DB·Redis)
+docker compose up -d
+# 2. 이 폴더에서 웹 → http://localhost:3000
+docker compose up --build -d
+# 끝낼 때 (이 폴더)
+docker compose down
+```
+
+- 웹 컨테이너는 BE와 같은 Docker 네트워크(`be-nerdnam_default`)에 들어가 BE를 `http://api:8080`으로 부른다. BE가 안 떠 있으면 "network … could not be found" 오류가 난다.
+- 3000번을 이미 쓰고 있으면 `WEB_PORT=3001 docker compose up --build -d`. 다만 BE는 로그인이 끝나면 3000번으로 돌려보낸다.
+- BE 폴더 이름이 `BE-nerdnam`이 아니면 네트워크 이름이 달라진다: `BE_NETWORK=폴더이름소문자_default docker compose up --build -d`.
+- 로그인은 2번과 같이 BE `.env`에 구글·카카오 키가 있어야 끝까지 된다.
+
 ## 자주 쓰는 명령
 
 ```bash
