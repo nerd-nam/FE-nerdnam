@@ -28,10 +28,9 @@ type EpisodeCardProps = {
   busy: boolean;
   onToggle: () => void;
   onViewVersion: (version: number) => void;
-  onUseVersion: (version: number) => void; // "이 버전으로 바꾸기"
   onAnswer: (key: string, answer: string) => void; // 확인 질문 답변 (AI 가 새 버전을 만든다)
   onDrop: (key: string) => void; // "빼고 진행" (AI 없이 새 버전)
-  onConfirm: () => void;
+  onConfirm: (version: number) => void; // 지금 보고 있는 버전으로 확정 (이전 버전이면 그 버전 내용이 최종이 된다)
   onExclude: () => void;
   onReopen: () => void; // "다시 검토하기"
   onRevise: (feedback: string) => Promise<boolean>; // "이 사례 수정 요청" (AI). 요청이 받아지면 true
@@ -118,7 +117,11 @@ function EpisodeBody(props: EpisodeCardProps & { bodyId: string }) {
   const shown = episode.versions[viewingVersion] ?? currentOf(episode);
   const previous = episode.versions[viewingVersion - 1];
   const resultChanged = previous && previous.result !== shown.result;
-  const pending = currentOf(episode).questions;
+  // 이전 버전을 보고 있는지. 이때는 그 버전으로 확정하거나 제외만 할 수 있다 (FE 결정 2026-10-26).
+  // 수정 요청·직접 편집·질문 답변은 최신 버전을 바탕으로 새 버전을 만들어서, 이전 버전을 보는 중에는 숨긴다
+  const viewingOlder = viewingVersion !== episode.currentVersion;
+  // 확정을 막는 확인 필요 질문: 보고 있는 버전의 질문 (이전 버전으로 확정하면 그 버전의 질문이 살아남는다)
+  const pending = shown.questions;
   // 고칠 수 있는 건 검토 중인 사례뿐이다. 확정·제외한 사례는 읽기 전용이고, 고치려면 "다시 검토하기"를 먼저 누른다 (기획서 v1.19)
   const isReviewing = !readOnly && episode.status === "review";
 
@@ -156,15 +159,13 @@ function EpisodeBody(props: EpisodeCardProps & { bodyId: string }) {
         )}
       </div>
 
-      {/* 이전 버전을 볼 때만 "이 버전으로 바꾸기" (기획서 v1.11 F2 되돌리기). 고른 버전을 복사해 새 최신 버전을 만든다(BE) */}
-      {isReviewing && viewingVersion !== episode.currentVersion && (
+      {/* 이전 버전을 볼 때: 이 버전으로 확정할 수 있다고 알린다 (되돌리기, 기획서 F2. 따로 "바꾸기" 버튼은 두지 않는다 — 누를 때마다 버전이 늘어 헷갈렸다) */}
+      {isReviewing && viewingOlder && (
         <div className={styles.olderNote}>
           <span>
-            이전 버전(v{viewingVersion})을 보고 있어요. 지금 쓰는 내용은 최신 버전(v{episode.currentVersion})이에요.
+            이전 버전(v{viewingVersion})을 보고 있어요. 이대로 확정하면 이 버전 내용으로 확정돼요. 고치려면 최신 버전(v{episode.currentVersion})으로
+            돌아가세요.
           </span>
-          <Button size="sm" disabled={busy} onClick={() => props.onUseVersion(viewingVersion)}>
-            이 버전으로 바꾸기
-          </Button>
         </div>
       )}
 
@@ -212,6 +213,7 @@ function EpisodeBody(props: EpisodeCardProps & { bodyId: string }) {
       </div>
 
       {isReviewing &&
+        !viewingOlder &&
         pending.map((question) => (
           <QuestionBox
             key={question.key}
@@ -240,19 +242,35 @@ function EpisodeBody(props: EpisodeCardProps & { bodyId: string }) {
             이 사례 제외
           </Button>
           <div className={styles.row}>
-            <Button disabled={busy} onClick={() => setMode("revise")}>
-              <Icon name="refresh" size="sm" />이 사례 수정 요청
-            </Button>
-            <Button disabled={busy} onClick={() => setMode("edit")}>
-              직접 편집
-            </Button>
-            <Button id={`${episode.id}-confirm`} variant="primary" disabled={busy || pending.length > 0} onClick={props.onConfirm}>
-              <Icon name="check" size="sm" bold />이 사례 확정
+            {!viewingOlder && (
+              <>
+                <Button disabled={busy} onClick={() => setMode("revise")}>
+                  <Icon name="refresh" size="sm" />이 사례 수정 요청
+                </Button>
+                <Button disabled={busy} onClick={() => setMode("edit")}>
+                  직접 편집
+                </Button>
+              </>
+            )}
+            <Button
+              id={`${episode.id}-confirm`}
+              variant="primary"
+              disabled={busy || pending.length > 0}
+              onClick={() => props.onConfirm(viewingVersion)}
+            >
+              <Icon name="check" size="sm" bold />
+              {viewingOlder ? `v${viewingVersion}로 확정` : "이 사례 확정"}
             </Button>
           </div>
         </div>
       )}
-      {isReviewing && pending.length > 0 && <p className={styles.hint}>확인 필요 항목을 처리하면 확정할 수 있어요.</p>}
+      {isReviewing && pending.length > 0 && (
+        <p className={styles.hint}>
+          {viewingOlder
+            ? "이 버전에는 확인 필요 항목이 남아 있어 확정할 수 없어요. 최신 버전에서 처리해 주세요."
+            : "확인 필요 항목을 처리하면 확정할 수 있어요."}
+        </p>
+      )}
     </div>
   );
 }

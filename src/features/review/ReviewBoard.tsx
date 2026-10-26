@@ -2,7 +2,7 @@
 
 // S05 의 움직이는 부분 전체. 사례 결정·진행률·프로젝트 확정 버튼이 같은 데이터를 봐야 해서 상태를 여기 한곳에 모은다.
 // 처음 데이터는 페이지가 서버에서 가져와 넘겨준다(GET /api/projects/{id}/review). 그 뒤로는 버튼마다 브라우저에서 서버에 보낸다(C-02 S05).
-// - AI 없이 바로 끝나는 것(확정·제외·다시 검토하기·빼고 진행·이 버전으로 바꾸기·직접 편집·직접 추가·프로젝트 확정):
+// - AI 없이 바로 끝나는 것(확정(이전 버전이면 되돌린 뒤 확정)·제외·다시 검토하기·빼고 진행·직접 편집·직접 추가·프로젝트 확정):
 //   서버가 바뀐 검토 화면 전체(Review)를 돌려주므로 그것으로 화면을 바꾼다. 누를 때마다 바로 저장 (확인할 것 7)
 // - AI 가 하는 것(확인 질문 답변·이 사례 수정 요청·다시 나누기): 202 + jobId → 끝날 때까지 기다린 뒤(shared/api/aiJob) 검토 화면을 다시 가져온다
 // - AI 작업이 도는 동안은 서버가 같은 프로젝트의 모든 변경을 막는다(409 AI_JOB_RUNNING). 그래서 화면도 모든 버튼을 막는다(busy)
@@ -172,6 +172,19 @@ export function ReviewBoard({ initial, rating }: ReviewBoardProps) {
     focusAfter(`${next ? next.id : id}-toggle`);
   }
 
+  // 사례 확정. 이전 버전을 보고 있었으면 그 버전으로 먼저 되돌린 뒤(서버가 그 버전을 복사해 새 최신 버전을 만든다) 확정한다.
+  // 확정 요청은 버전을 받지 않아서 두 번 보낸다. 되돌리기만 되고 확정이 실패하면 오류를 보여 주고, 화면은 되돌린 최신 버전이다
+  async function confirmEpisode(id: string, numId: number, version: number, current: number) {
+    if (version !== current) {
+      const restored = await change(
+        api.POST("/api/projects/{projectId}/episodes/{episodeId}/restore", { ...path(numId), body: { versionNo: version } }),
+        "이 버전으로 확정하지 못했어요. 잠시 뒤 다시 시도해 주세요.",
+      );
+      if (!restored) return;
+    }
+    await decide(id, numId, "confirm");
+  }
+
   async function confirmProject() {
     const ok = await change(api.POST("/api/projects/{projectId}/confirm", { params: { path: { projectId } } }), "프로젝트를 확정하지 못했어요. 잠시 뒤 다시 시도해 주세요.");
     if (ok) router.push(routes.library);
@@ -248,12 +261,6 @@ export function ReviewBoard({ initial, rating }: ReviewBoardProps) {
               busy={busy}
               onToggle={() => setOpenId((prev) => (prev === ep.id ? null : ep.id))}
               onViewVersion={(v) => setViewing((prev) => ({ ...prev, [ep.id]: v }))}
-              onUseVersion={(v) =>
-                change(
-                  api.POST("/api/projects/{projectId}/episodes/{episodeId}/restore", { ...path(ep.numId), body: { versionNo: v } }),
-                  "버전을 바꾸지 못했어요. 잠시 뒤 다시 시도해 주세요.",
-                )
-              }
               onAnswer={(key, answer) =>
                 startJob(
                   api.POST("/api/projects/{projectId}/episodes/{episodeId}/clarifications/{key}/answer", {
@@ -271,7 +278,7 @@ export function ReviewBoard({ initial, rating }: ReviewBoardProps) {
                   "질문을 빼지 못했어요. 잠시 뒤 다시 시도해 주세요.",
                 )
               }
-              onConfirm={() => decide(ep.id, ep.numId, "confirm")}
+              onConfirm={(v) => confirmEpisode(ep.id, ep.numId, v, ep.currentVersion)}
               onExclude={() => decide(ep.id, ep.numId, "exclude")}
               onReopen={async () => {
                 const ok = await change(
