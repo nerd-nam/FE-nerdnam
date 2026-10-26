@@ -85,3 +85,9 @@
   .title { font-size: 24px; }
   .progress { align-items: flex-start; }
 }
+
+/* 직접 편집·직접 추가 양식 (카드 안, FE 디자인 2026-10-26) */
+.editForm { display: flex; flex-direction: column; gap: 14px; }
+/* 사례 직접 추가: 목록 끝의 빈 카드 */
+.addCard { padding: 20px; border: 1px dashed var(--line-dashed); border-radius: var(--radius-lg); background: var(--surface); }
+.addCardTitle { margin-bottom: 12px; font-size: 15px; font-weight: 700; }

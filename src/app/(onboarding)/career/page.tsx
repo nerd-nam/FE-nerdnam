@@ -26,7 +26,7 @@ export default function CareerPage({ searchParams }: PageProps<"/career">) {
           return (
             <>
               {/* 검토 중에 왔으면 S04(원문 화면)로 갈 때만 경고. 단계 표시의 S02 링크에도 ?review 를 이어 붙인다 */}
-              {reviewId && <LeaveGuard active mode="enter-original" />}
+              {reviewId && <LeaveGuard active mode="enter-original" discardProjectId={Number(reviewId)} />}
               <Stepper label="온보딩 단계" steps={onboardingSteps(reviewId)} current={1} />
               <PageHead
                 title="경력을 입력해 주세요"

@@ -43,7 +43,7 @@ export const VERDICT_LABEL: Record<Verdict, string> = { met: "충족", partial: 
 // S09 임시 데이터도 같은 근거를 쓴다 (features/guide/mock.ts)
 export const SKILL_SPRING: Evidence = { kind: "skill", label: "기술 · Spring Boot (능숙)" };
 export const CAREER_OO: Evidence = { kind: "career", label: "경력 · OO커머스" };
-// 사례 근거는 확정한 프로젝트에만 있다. p_105 는 S05 임시 데이터의 확정 프로젝트 (features/review/mock.ts)
+// 사례 근거는 확정한 프로젝트에만 있다. p_105 는 S05 임시 데이터의 확정 프로젝트 (S05 읽기 모드)
 export const EP_PAYMENT: Evidence = { kind: "episode", label: "결제 승인 API 성능 개선", projectId: "p_105", episodeId: "e_501" };
 export const EP_BATCH: Evidence = { kind: "episode", label: "정산 배치 쿼리 개선", projectId: "p_103", episodeId: "e_301" };
 // 재등록 중인 프로젝트(S06 의 재등록 중 카드)의 이전 확정 사례. 누르면 S06 의 그 카드로 간다

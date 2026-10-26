@@ -16,8 +16,8 @@ type RatingProps = {
   placeholder: string; // 한 줄 의견 예시
   initialScore?: number; // 이미 남긴 평가가 있으면
   initialComment?: string;
-  // 보내기를 눌렀을 때. 저장(API)은 ④ 단계에서 붙인다
-  onSubmit?: (value: { score: number; comment: string }) => void;
+  // 보내기를 눌렀을 때. 서버에 저장하고, 실패하면 화면에 띄울 문장을 돌려준다(성공이면 null)
+  onSubmit?: (value: { score: number; comment: string }) => Promise<string | null> | void;
 };
 
 export function Rating({ legend, placeholder, initialScore = 0, initialComment = "", onSubmit }: RatingProps) {
@@ -26,6 +26,8 @@ export function Rating({ legend, placeholder, initialScore = 0, initialComment =
   const [comment, setComment] = useState(initialComment);
   const [sent, setSent] = useState(initialScore > 0); // 지금 화면의 값을 보냈는지 (값을 바꾸면 false)
   const [everSent, setEverSent] = useState(initialScore > 0); // 한 번이라도 보냈는지 (버튼 글자용)
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   return (
     <fieldset className={styles.rating}>
@@ -74,16 +76,26 @@ export function Rating({ legend, placeholder, initialScore = 0, initialComment =
         />
         <Button
           size="sm"
-          disabled={score === 0}
-          onClick={() => {
-            onSubmit?.({ score, comment: comment.trim() });
+          disabled={score === 0 || pending}
+          onClick={async () => {
+            setPending(true);
+            setError(null);
+            const failed = (await onSubmit?.({ score, comment: comment.trim() })) ?? null;
+            setPending(false);
+            if (failed) return setError(failed);
             setSent(true);
             setEverSent(true);
           }}
         >
-          {everSent ? "다시 보내기" : "보내기"}
+          {pending ? "보내는 중…" : everSent ? "다시 보내기" : "보내기"}
         </Button>
       </div>
+
+      {error && (
+        <p className={styles.error} role="alert">
+          {error}
+        </p>
+      )}
 
       {sent && (
         <p className={styles.done} role="status">

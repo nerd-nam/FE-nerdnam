@@ -14,3 +14,4 @@
    Safari 는 이 기본 너비를 Chrome 보다 크게 잡아 특히 잘 넘친다. 0 으로 두면 카드 폭에 맞춰 줄어든다 */
 .comment { flex: 1 1 220px; width: auto; min-width: 0; }
 .done { margin: 0; font-size: 13px; color: var(--ok); }
+.error { font-size: 13px; color: var(--bad); }

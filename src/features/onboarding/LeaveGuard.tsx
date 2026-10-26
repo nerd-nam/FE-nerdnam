@@ -8,7 +8,10 @@
 // - 브라우저 뒤로 가기·창 닫기는 여기서 막지 않는다. 그 경우는 다음에 S04 에 들어갈 때 서버가 버린다 (C-02 S05 확인할 것 8번)
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { api } from "@/shared/api/client";
+import { problemMessage } from "@/shared/api/problem";
 import { Button } from "@/shared/ui/Button";
+import { Callout } from "@/shared/ui/Callout";
 import { Dialog } from "@/shared/ui/Dialog";
 import { routes } from "@/shared/routes";
 
@@ -24,9 +27,30 @@ function shouldWarn(mode: Mode, pathname: string) {
   return !KEEP_PATHS.includes(pathname);
 }
 
-export function LeaveGuard({ active, mode }: { active: boolean; mode: Mode }) {
+// discardProjectId: "나가기"를 누르면 이 프로젝트의 검토 결과를 서버에서 버린 뒤 이동한다 (POST /review/discard, 기획서 v1.14 표)
+export function LeaveGuard({ active, mode, discardProjectId }: { active: boolean; mode: Mode; discardProjectId?: number }) {
   const router = useRouter();
   const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [leaving, setLeaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function stay() {
+    setPendingHref(null);
+    setError(null);
+  }
+
+  async function leave() {
+    const href = pendingHref!;
+    if (discardProjectId !== undefined) {
+      setLeaving(true);
+      setError(null);
+      const { error } = await api.POST("/api/projects/{projectId}/review/discard", { params: { path: { projectId: discardProjectId } } });
+      setLeaving(false);
+      if (error) return setError(problemMessage(error, "검토 결과를 정리하지 못했어요. 잠시 뒤 다시 시도해 주세요."));
+    }
+    setPendingHref(null);
+    router.push(href);
+  }
 
   useEffect(() => {
     if (!active) return;
@@ -54,25 +78,22 @@ export function LeaveGuard({ active, mode }: { active: boolean; mode: Mode }) {
   return (
     <Dialog
       open={pendingHref !== null}
-      onClose={() => setPendingHref(null)}
+      onClose={stay}
       title="지금 나가면 검토한 내용이 사라져요"
       actions={
         <>
-          <Button onClick={() => setPendingHref(null)}>계속 검토하기</Button>
-          <Button
-            variant="danger"
-            onClick={() => {
-              // TODO(④): 서버에 "검토 결과 버리기" 요청 (C-02 S04 확인할 것 6번)
-              const href = pendingHref!;
-              setPendingHref(null);
-              router.push(href);
-            }}
-          >
-            나가기
+          <Button onClick={stay}>계속 검토하기</Button>
+          <Button variant="danger" disabled={leaving} onClick={leave}>
+            {leaving ? "정리하는 중…" : "나가기"}
           </Button>
         </>
       }
     >
+      {error && (
+        <Callout tone="bad" icon="alert" role="alert">
+          {error}
+        </Callout>
+      )}
       프로젝트를 확정하지 않으면 사례별 결정과 확인 질문 답변이 저장되지 않아요. 다시 보려면 원문 화면에서 재구성을 다시 해야 해요.
     </Dialog>
   );

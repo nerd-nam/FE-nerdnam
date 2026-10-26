@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { routes } from "@/shared/routes";
 import { Card } from "@/shared/ui/Card";
-import type { ReviewData } from "./mock";
+import { currentOf, type ReviewData } from "./review";
 import styles from "./Review.module.css";
 
 const TONES = [styles.tone0, styles.tone1, styles.tone2, styles.tone3];
@@ -14,10 +14,13 @@ export function toneClass(index: number) {
 type Mark = { start: number; end: number; episodeIndex: number };
 
 // 원문 패널: 내가 쓴 원문에서 각 사례의 근거가 된 부분을 사례 색으로 칠한다 (기획서 4.3 source_spans)
+// 구간 위치는 "원문 + 확인 질문 답변"(sourceText) 기준이다. 원문 부분은 위치가 같아서 원문 안에 있는 구간만 칠하고,
+// 답변은 원문 아래에 "사례 N 확인 질문에 답한 내용"으로 그 사례 색을 칠해 보여 준다. 각 사례의 지금 버전 구간을 쓴다.
 // 움직이는 부분이 없어서 서버 컴포넌트다.
 export function RawTextPanel({ data }: { data: ReviewData }) {
   const marks: Mark[] = data.episodes
-    .flatMap((ep, episodeIndex) => ep.sourceSpans.map(([start, end]) => ({ start, end, episodeIndex })))
+    .flatMap((ep, episodeIndex) => currentOf(ep).sourceSpans.map(([start, end]) => ({ start, end, episodeIndex })))
+    .filter((m) => m.end <= data.rawText.length) // 답변 부분의 구간은 아래 답변 목록에서 보여 준다
     .sort((a, b) => a.start - b.start);
 
   const labeled = new Set<number>(); // "[사례 N]" 라벨은 그 사례가 처음 나오는 문단 앞에 한 번만
@@ -66,7 +69,7 @@ export function RawTextPanel({ data }: { data: ReviewData }) {
         <h2 id="raw-title" className={styles.rawTitle}>
           내가 쓴 원문
         </h2>
-        <Link href={routes.project(data.projectId)} className={styles.rawEdit}>
+        <Link href={routes.project(String(data.projectId))} className={styles.rawEdit}>
           원문 수정
         </Link>
       </div>
@@ -80,12 +83,12 @@ export function RawTextPanel({ data }: { data: ReviewData }) {
       </p>
       <div className={styles.rawBody}>
         {paragraphs}
-        {data.answers.map((answer) => {
-          const index = data.episodes.findIndex((ep) => ep.id === answer.episodeId);
+        {data.supplements.map((s) => {
+          const index = data.episodes.findIndex((ep) => ep.numId === s.episodeId);
           return (
-            <p key={answer.episodeId} className={styles.answers}>
-              <strong>사례 {index + 1} 확인 질문에 답한 내용</strong> ·{" "}
-              <mark className={`${styles.mark} ${toneClass(index)}`}>{answer.text}</mark>
+            <p key={s.id} className={styles.answers}>
+              <strong>{index >= 0 ? `사례 ${index + 1} ` : ""}확인 질문에 답한 내용</strong> ·{" "}
+              {index >= 0 ? <mark className={`${styles.mark} ${toneClass(index)}`}>{s.answer}</mark> : s.answer}
             </p>
           );
         })}

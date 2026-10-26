@@ -1,48 +1,114 @@
 "use client";
 
-// S05 의 움직이는 부분 전체. 사례 결정·진행률·프로젝트 확정 버튼이 같은 상태를 봐야 해서 상태를 여기 한곳에 모은다.
-// 원문 패널(rawPanel)은 움직이지 않아서 서버에서 만들어 받아 그 자리에 끼워 넣기만 한다.
-import { useEffect, useState, type ReactNode } from "react";
+// S05 의 움직이는 부분 전체. 사례 결정·진행률·프로젝트 확정 버튼이 같은 데이터를 봐야 해서 상태를 여기 한곳에 모은다.
+// 처음 데이터는 페이지가 서버에서 가져와 넘겨준다(GET /api/projects/{id}/review). 그 뒤로는 버튼마다 브라우저에서 서버에 보낸다(C-02 S05).
+// - AI 없이 바로 끝나는 것(확정·제외·다시 검토하기·빼고 진행·이 버전으로 바꾸기·직접 편집·직접 추가·프로젝트 확정):
+//   서버가 바뀐 검토 화면 전체(Review)를 돌려주므로 그것으로 화면을 바꾼다. 누를 때마다 바로 저장 (확인할 것 7)
+// - AI 가 하는 것(확인 질문 답변·이 사례 수정 요청·다시 나누기): 202 + jobId → 끝날 때까지 기다린 뒤(shared/api/aiJob) 검토 화면을 다시 가져온다
+// - AI 작업이 도는 동안은 서버가 같은 프로젝트의 모든 변경을 막는다(409 AI_JOB_RUNNING). 그래서 화면도 모든 버튼을 막는다(busy)
+// 확정한 프로젝트면 읽기 모드 (기획서 v1.17 F2): 확정한 사례만, 결정·버전·질문·다시 나누기·사례 추가 없음, 나갈 때 경고 없음
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { aiFailureMessage, waitForAiJob } from "@/shared/api/aiJob";
+import { api } from "@/shared/api/client";
+import { isProblem, problemMessage } from "@/shared/api/problem";
+import type { components } from "@/shared/api/schema";
 import { routes } from "@/shared/routes";
 import { Badge } from "@/shared/ui/Badge";
-import { Button, ButtonLink } from "@/shared/ui/Button";
+import { Button } from "@/shared/ui/Button";
+import { Callout } from "@/shared/ui/Callout";
 import { Card } from "@/shared/ui/Card";
 import { Textarea } from "@/shared/ui/Field";
 import { Icon } from "@/shared/ui/Icon";
 import { Rating } from "@/shared/ui/Rating";
+import { StateCard, StateText } from "@/shared/ui/StateCard";
 import { cx } from "@/shared/ui/cx";
 import { useFocusAfterRender } from "@/shared/useFocusAfterRender";
 import { ReregisterButton } from "@/features/library/ReregisterButton";
-import { EpisodeCard } from "./EpisodeCard";
 import { LeaveGuard } from "@/features/onboarding/LeaveGuard";
-import type { Episode, ReviewData } from "./mock";
+import { EditForm, EpisodeCard, type EpisodeFields } from "./EpisodeCard";
+import { RawTextPanel } from "./RawTextPanel";
+import { toReviewData, type ReviewData } from "./review";
 import styles from "./Review.module.css";
 
+type ApiResult = { data?: components["schemas"]["Review"]; error?: unknown; response: Response };
+type Accepted = { data?: { jobId: number }; error?: unknown; response: Response };
+
+// 기다리는 AI 작업 종류별 안내
+const WAIT_TITLE = {
+  answer: "답변을 반영해 사례를 고치고 있어요",
+  revise: "요청대로 사례를 고치고 있어요",
+  resplit: "사례를 다시 나누고 있어요",
+  other: "AI가 사례를 정리하고 있어요",
+} as const;
+type JobKind = keyof typeof WAIT_TITLE;
+
 type ReviewBoardProps = {
-  data: ReviewData;
-  rawPanel: ReactNode; // 서버 컴포넌트(RawTextPanel)를 받아 그대로 놓는다
+  initial: ReviewData;
+  rating: { score: number; comment: string } | null; // 내가 남긴 사례 생성 평가 (GET /rating)
 };
 
-// 확정한 프로젝트면 읽기 모드 (기획서 v1.17 F2 "확정한 프로젝트 보기")
-// - 확정한 사례만, 결정·버전·질문·다시 나누기·사례 추가 없음, 나갈 때 경고 없음
-// - 진행률 자리에 "수정"(재등록 안내), 사례 생성 평가는 그대로
-export function ReviewBoard({ data, rawPanel }: ReviewBoardProps) {
+export function ReviewBoard({ initial, rating }: ReviewBoardProps) {
+  const router = useRouter();
+  const [data, setData] = useState(initial);
   const readOnly = data.projectStatus === "confirmed";
-  const [episodes, setEpisodes] = useState(data.episodes);
-  const [openId, setOpenId] = useState<string | null>(data.episodes[0]?.id ?? null);
-  const [viewing, setViewing] = useState<Record<string, number>>(() =>
-    Object.fromEntries(data.episodes.map((ep) => [ep.id, ep.currentVersion])),
-  );
-  const [resolved, setResolved] = useState<string[]>([]); // 처리한 확인 필요 질문 id
-  const [feedback, setFeedback] = useState("");
+  const episodes = data.episodes;
+  const projectId = data.projectId;
+  const [openId, setOpenId] = useState<string | null>(initial.episodes[0]?.id ?? null);
+  const [viewing, setViewing] = useState<Record<string, number>>({}); // 이전 버전을 보고 있는 사례만 (없으면 현재 버전)
+  const [feedback, setFeedback] = useState(""); // 다시 나누기 피드백
+  const [adding, setAdding] = useState(false); // "AI가 놓친 사례 직접 추가" 양식
+  const [saving, setSaving] = useState(false); // AI 없는 요청을 기다리는 중
+  const [waiting, setWaiting] = useState<JobKind | null>(initial.runningJobId !== null ? "other" : null); // AI 작업을 기다리는 중
+  const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const focusAfter = useFocusAfterRender();
+  const busy = saving || waiting !== null;
 
-  // 주소 끝이 #e_301 처럼 사례 id 이면 그 사례를 펼치고 그 위치로 스크롤한다 (S08 사례 근거 → S05 읽기 모드)
+  // ── 서버 응답으로 화면 바꾸기
+  function apply(review: components["schemas"]["Review"]) {
+    setData(toReviewData(review));
+    setViewing({}); // 버전이 바뀌었을 수 있어 보고 있던 이전 버전은 잊는다
+  }
+
+  async function reload() {
+    const { data: review } = await api.GET("/api/projects/{projectId}/review", { params: { path: { projectId } } });
+    if (review) apply(review);
+  }
+
+  // AI 작업을 끝까지 기다린 뒤 검토 화면을 다시 가져온다. 실패하면 이유를 보여 준다
+  function wait(jobId: number, kind: JobKind) {
+    setWaiting(kind);
+    follow(jobId);
+  }
+
+  // 작업 상태를 따라가기만 한다 (기다림 표시는 이미 켜져 있을 때)
+  function follow(jobId: number) {
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    waitForAiJob(jobId, controller.signal).then(async (done) => {
+      if (!done) return; // 화면을 떠남
+      await reload();
+      setWaiting(null);
+      if (done.status === "failed") setError(aiFailureMessage(done.failureCode));
+    });
+  }
+
+  // 새로고침했거나 다시 들어왔는데 AI 작업이 돌고 있으면 이어서 기다린다 (S04 에서 막 넘어온 경우 포함)
+  useEffect(() => {
+    if (initial.runningJobId !== null) follow(initial.runningJobId); // 기다림 표시는 처음부터 켜져 있다
+    return () => abortRef.current?.abort();
+    // 처음 한 번만
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 주소 끝이 #사례번호 이면 그 사례를 펼치고 그 위치로 스크롤한다 (S08 사례 근거 → S05 읽기 모드)
   // #… 부분은 서버로 오지 않아서, 화면이 브라우저에 그려진 다음(effect)에만 읽을 수 있다.
   useEffect(() => {
     function openFromHash() {
       const id = decodeURIComponent(location.hash.slice(1));
-      if (!data.episodes.some((ep) => ep.id === id)) return;
+      if (!initial.episodes.some((ep) => ep.id === id)) return;
       setOpenId(id);
       // 펼친 내용이 그려진 다음 프레임에 스크롤한다
       requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ block: "start" }));
@@ -50,39 +116,65 @@ export function ReviewBoard({ data, rawPanel }: ReviewBoardProps) {
     openFromHash();
     window.addEventListener("hashchange", openFromHash);
     return () => window.removeEventListener("hashchange", openFromHash);
-  }, [data.episodes]);
+  }, [initial.episodes]);
+
+  // AI 없이 끝나는 요청: 바뀐 검토 화면을 받아 바꾼다. 성공하면 true
+  async function change(request: Promise<ApiResult>, fallback: string) {
+    setSaving(true);
+    setError(null);
+    const { data: review, error: problem, response } = await request;
+    setSaving(false);
+    if (review) {
+      apply(review);
+      return true;
+    }
+    // 그사이 AI 작업이 시작돼 있으면 그 작업을 기다린다
+    if (response.status === 409 && isProblem(problem) && typeof problem.runningJobId === "number") wait(problem.runningJobId, "other");
+    setError(problemMessage(problem, fallback));
+    return false;
+  }
+
+  // AI 가 하는 요청: 받아지면(202) 기다리기 시작. 받아지면 true
+  async function startJob(request: Promise<Accepted>, kind: JobKind) {
+    setSaving(true);
+    setError(null);
+    const { data: accepted, error: problem, response } = await request;
+    setSaving(false);
+    if (accepted) {
+      wait(accepted.jobId, kind);
+      return true;
+    }
+    if (response.status === 409 && isProblem(problem) && typeof problem.runningJobId === "number") wait(problem.runningJobId, "other");
+    setError(problemMessage(problem, "요청을 보내지 못했어요. 잠시 뒤 다시 시도해 주세요."));
+    return false;
+  }
+
+  const path = (episodeId: number) => ({ params: { path: { projectId, episodeId } } });
 
   // ── 계산해서 얻는 값 (상태로 따로 들고 있지 않는다)
-  const pendingOf = (ep: Episode) => ep.unverified.filter((q) => !resolved.includes(q.id));
   const doneCount = episodes.filter((ep) => ep.status !== "review").length;
   const confirmedCount = episodes.filter((ep) => ep.status === "confirmed").length;
   const total = episodes.length;
-  const canConfirmProject = doneCount === total && confirmedCount > 0; // 기획서 F2 프로젝트 확정 조건
-
-  // ── 상태를 바꾸는 함수들
-  function updateEpisode(id: string, change: (ep: Episode) => Episode) {
-    setEpisodes((prev) => prev.map((ep) => (ep.id === id ? change(ep) : ep)));
-  }
+  const canConfirmProject = total > 0 && doneCount === total && confirmedCount > 0; // 기획서 F2 프로젝트 확정 조건
 
   // 결정하고 나면 아직 검토 중인 다음 사례를 펼친다 (디자인 review.js 와 같은 흐름)
   // 누른 버튼이 카드와 함께 접혀 사라지므로, 커서를 펼친 사례의 제목(없으면 방금 결정한 사례의 제목)으로 옮긴다 (FE-16)
-  function openNextReviewing(afterId: string) {
-    const next = episodes.find((ep) => ep.id !== afterId && ep.status === "review");
+  async function decide(id: string, numId: number, kind: "confirm" | "exclude") {
+    const ok = await change(
+      kind === "confirm"
+        ? api.POST("/api/projects/{projectId}/episodes/{episodeId}/confirm", path(numId))
+        : api.POST("/api/projects/{projectId}/episodes/{episodeId}/exclude", path(numId)),
+      kind === "confirm" ? "사례를 확정하지 못했어요. 잠시 뒤 다시 시도해 주세요." : "사례를 제외하지 못했어요. 잠시 뒤 다시 시도해 주세요.",
+    );
+    if (!ok) return;
+    const next = episodes.find((ep) => ep.id !== id && ep.status === "review");
     setOpenId(next ? next.id : null);
-    focusAfter(`${next ? next.id : afterId}-toggle`);
+    focusAfter(`${next ? next.id : id}-toggle`);
   }
 
-  function decide(id: string, status: "confirmed" | "excluded") {
-    updateEpisode(id, (ep) => ({ ...ep, status }));
-    openNextReviewing(id);
-  }
-
-  // "이 버전으로 바꾸기": 고른 버전 내용을 새 최신 버전으로 복사한다 (디자인 예시와 같은 방식, 실제 저장 방식은 BE 결정 · C-02 S05 확인할 것 1번)
-  function switchToVersion(id: string, version: number) {
-    const ep = episodes.find((item) => item.id === id)!;
-    const next = Math.max(...Object.keys(ep.versions).map(Number)) + 1;
-    updateEpisode(id, (item) => ({ ...item, currentVersion: next, versions: { ...item.versions, [next]: item.versions[version] } }));
-    setViewing((prev) => ({ ...prev, [id]: next }));
+  async function confirmProject() {
+    const ok = await change(api.POST("/api/projects/{projectId}/confirm", { params: { path: { projectId } } }), "프로젝트를 확정하지 못했어요. 잠시 뒤 다시 시도해 주세요.");
+    if (ok) router.push(routes.library);
   }
 
   const footNote = canConfirmProject
@@ -93,8 +185,8 @@ export function ReviewBoard({ data, rawPanel }: ReviewBoardProps) {
 
   return (
     <>
-      {/* 확정 전에 S04·온보딩 밖으로 나가면 경고 (기획서 v1.14 검토 결과 유지 규칙) */}
-      <LeaveGuard active={!readOnly} mode="leave-review" />
+      {/* 확정 전에 S04·온보딩 밖으로 나가면 경고하고, 나가기를 고르면 검토 결과를 버린다 (기획서 v1.14 검토 결과 유지 규칙) */}
+      <LeaveGuard active={!readOnly} mode="leave-review" discardProjectId={projectId} />
       <div className={styles.head}>
         <div className={styles.headText}>
           <div className={styles.headMeta}>
@@ -112,7 +204,7 @@ export function ReviewBoard({ data, rawPanel }: ReviewBoardProps) {
           )}
         </div>
         {readOnly ? (
-          <ReregisterButton projectId={data.projectId} title={data.title} />
+          <ReregisterButton projectId={String(projectId)} title={data.title} />
         ) : (
           <div className={styles.progress}>
             <span>
@@ -121,7 +213,7 @@ export function ReviewBoard({ data, rawPanel }: ReviewBoardProps) {
               </strong>{" "}
               결정됨
             </span>
-            <div className={styles.bar} style={{ gridTemplateColumns: `repeat(${total}, minmax(0, 1fr))` }} aria-hidden="true">
+            <div className={styles.bar} style={{ gridTemplateColumns: `repeat(${Math.max(total, 1)}, minmax(0, 1fr))` }} aria-hidden="true">
               {episodes.map((ep) => (
                 <span key={ep.id} className={cx(ep.status !== "review" && styles.barDone)} />
               ))}
@@ -130,8 +222,19 @@ export function ReviewBoard({ data, rawPanel }: ReviewBoardProps) {
         )}
       </div>
 
+      {waiting && (
+        <StateCard tone="wait" title={WAIT_TITLE[waiting]}>
+          <StateText>보통 15초쯤 걸려요. 끝나면 이 화면이 바뀌어요. 그동안은 사례를 고르거나 고칠 수 없어요.</StateText>
+        </StateCard>
+      )}
+      {error && (
+        <Callout tone="bad" icon="alert" role="alert">
+          {error}
+        </Callout>
+      )}
+
       <div className={styles.split}>
-        {rawPanel}
+        <RawTextPanel data={data} />
 
         <section className={styles.main} aria-label="사례 목록">
           {episodes.map((ep, index) => (
@@ -141,34 +244,80 @@ export function ReviewBoard({ data, rawPanel }: ReviewBoardProps) {
               readOnly={readOnly}
               episode={ep}
               isOpen={openId === ep.id}
-              viewingVersion={viewing[ep.id]}
-              pending={pendingOf(ep)}
+              viewingVersion={viewing[ep.id] ?? ep.currentVersion}
+              busy={busy}
               onToggle={() => setOpenId((prev) => (prev === ep.id ? null : ep.id))}
               onViewVersion={(v) => setViewing((prev) => ({ ...prev, [ep.id]: v }))}
-              onUseVersion={(v) => switchToVersion(ep.id, v)}
-              // 답변을 원문에 덧붙여 새 버전을 만드는 일(AI)은 ④ 단계에서 붙인다. 지금은 질문만 처리됨으로 바꾼다
-              onResolve={(questionId) => {
-                setResolved((prev) => [...prev, questionId]);
-                // 질문 상자가 사라지므로 커서를 다음 질문의 답변칸, 없으면 "이 사례 확정"으로 옮긴다 (FE-16)
-                const nextQuestion = pendingOf(ep).find((q) => q.id !== questionId);
-                focusAfter(nextQuestion ? `${nextQuestion.id}-answer` : `${ep.id}-confirm`);
-              }}
-              onConfirm={() => decide(ep.id, "confirmed")}
-              onExclude={() => decide(ep.id, "excluded")}
-              onReopen={() => {
-                updateEpisode(ep.id, (item) => ({ ...item, status: "review" }));
+              onUseVersion={(v) =>
+                change(
+                  api.POST("/api/projects/{projectId}/episodes/{episodeId}/restore", { ...path(ep.numId), body: { versionNo: v } }),
+                  "버전을 바꾸지 못했어요. 잠시 뒤 다시 시도해 주세요.",
+                )
+              }
+              onAnswer={(key, answer) =>
+                startJob(
+                  api.POST("/api/projects/{projectId}/episodes/{episodeId}/clarifications/{key}/answer", {
+                    params: { path: { projectId, episodeId: ep.numId, key } },
+                    body: { answer },
+                  }),
+                  "answer",
+                )
+              }
+              onDrop={(key) =>
+                change(
+                  api.POST("/api/projects/{projectId}/episodes/{episodeId}/clarifications/{key}/drop", {
+                    params: { path: { projectId, episodeId: ep.numId, key } },
+                  }),
+                  "질문을 빼지 못했어요. 잠시 뒤 다시 시도해 주세요.",
+                )
+              }
+              onConfirm={() => decide(ep.id, ep.numId, "confirm")}
+              onExclude={() => decide(ep.id, ep.numId, "exclude")}
+              onReopen={async () => {
+                const ok = await change(
+                  api.POST("/api/projects/{projectId}/episodes/{episodeId}/undo", path(ep.numId)),
+                  "다시 검토로 바꾸지 못했어요. 잠시 뒤 다시 시도해 주세요.",
+                );
+                if (!ok) return;
                 setOpenId(ep.id);
                 focusAfter(`${ep.id}-toggle`); // "다시 검토하기" 버튼이 사라지므로 그 사례 제목으로 (FE-16)
               }}
+              onRevise={(text) =>
+                startJob(api.POST("/api/projects/{projectId}/episodes/{episodeId}/revision", { ...path(ep.numId), body: { feedback: text } }), "revise")
+              }
+              onEdit={(fields: EpisodeFields) =>
+                change(
+                  api.PUT("/api/projects/{projectId}/episodes/{episodeId}", { ...path(ep.numId), body: toEpisodeRequest(fields) }),
+                  "사례를 저장하지 못했어요. 잠시 뒤 다시 시도해 주세요.",
+                )
+              }
             />
           ))}
-          {/* 사례 직접 추가는 ④ 단계에서 붙인다 */}
-          {!readOnly && (
-            <Button block className={styles.addEpisode}>
-              <Icon name="plus" size="sm" />
-              AI가 놓친 사례 직접 추가
-            </Button>
-          )}
+
+          {!readOnly &&
+            (adding ? (
+              <div className={styles.addCard}>
+                <h2 className={styles.addCardTitle}>AI가 놓친 사례 직접 추가</h2>
+                <EditForm
+                  initial={{ title: "", role: "", problem: "", solution: "", result: "" }}
+                  busy={busy}
+                  submitLabel="사례 추가"
+                  onCancel={() => setAdding(false)}
+                  onSave={async (fields) => {
+                    const ok = await change(
+                      api.POST("/api/projects/{projectId}/episodes", { params: { path: { projectId } }, body: toEpisodeRequest(fields) }),
+                      "사례를 추가하지 못했어요. 잠시 뒤 다시 시도해 주세요.",
+                    );
+                    if (ok) setAdding(false);
+                  }}
+                />
+              </div>
+            ) : (
+              <Button block className={styles.addEpisode} disabled={busy} onClick={() => setAdding(true)}>
+                <Icon name="plus" size="sm" />
+                AI가 놓친 사례 직접 추가
+              </Button>
+            ))}
         </section>
       </div>
 
@@ -188,27 +337,26 @@ export function ReviewBoard({ data, rawPanel }: ReviewBoardProps) {
                 aria-describedby="feedback-help"
               />
               <p id="feedback-help" className={styles.help}>
-                어떻게 나누면 좋을지 적어 주세요. 적은 내용을 반영해 사례를 새로 만들어요. 원문에 없는 사실은 추가되지 않아요.
+                어떻게 나누면 좋을지 적어 주세요. 적은 내용을 반영해 사례를 새로 만들어요. 모든 사례의 결정이 처음으로 돌아가요. 원문에 없는
+                사실은 추가되지 않아요.
               </p>
             </div>
             <div className={styles.bottomActions}>
-              {/* 다시 나누기는 피드백이 있어야 누를 수 있다 (기획서 v1.12 F2). 실제 요청은 ④ 단계에서 붙인다 */}
-              <Button disabled={!feedback.trim()}>
+              {/* 다시 나누기는 피드백이 있어야 누를 수 있다 (기획서 v1.12 F2) */}
+              <Button
+                disabled={busy || !feedback.trim()}
+                onClick={async () => {
+                  if (await startJob(api.POST("/api/projects/{projectId}/resplit", { params: { path: { projectId } }, body: { feedback: feedback.trim() } }), "resplit"))
+                    setFeedback("");
+                }}
+              >
                 <Icon name="refresh" size="sm" />
                 다시 나누기
               </Button>
-              {canConfirmProject ? (
-                // data-allow-leave: 프로젝트 확정은 떠나기 경고를 띄우지 않는다
-              <ButtonLink variant="primary" href={routes.library} data-allow-leave>
-                  <Icon name="check" size="sm" bold />
-                  프로젝트 확정
-                </ButtonLink>
-              ) : (
-                <Button variant="primary" disabled>
-                  <Icon name="check" size="sm" bold />
-                  프로젝트 확정
-                </Button>
-              )}
+              <Button variant="primary" disabled={busy || !canConfirmProject} onClick={confirmProject}>
+                <Icon name="check" size="sm" bold />
+                프로젝트 확정
+              </Button>
             </div>
             <p className={styles.footNote} aria-live="polite">
               {footNote}
@@ -217,10 +365,27 @@ export function ReviewBoard({ data, rawPanel }: ReviewBoardProps) {
         </Card>
       )}
 
-      {/* 사례 생성 평가: 프로젝트마다 한 번, 언제든 바꿀 수 있음 (기획서 v1.12) */}
+      {/* 사례 생성 평가: 프로젝트마다 한 번, 언제든 바꿀 수 있음 (기획서 v1.12, 4.6) */}
       <Card size="sm" aria-label="사례 생성 평가">
-        <Rating legend="AI가 나눈 사례는 어땠나요?" placeholder="예: 사례를 너무 잘게 나눴어요" />
+        <Rating
+          legend="AI가 나눈 사례는 어땠나요?"
+          placeholder="예: 사례를 너무 잘게 나눴어요"
+          initialScore={rating?.score}
+          initialComment={rating?.comment}
+          onSubmit={async ({ score, comment }) => {
+            const { error: problem } = await api.PUT("/api/projects/{projectId}/rating", {
+              params: { path: { projectId } },
+              body: { score, comment: comment || null },
+            });
+            return problem ? problemMessage(problem, "평가를 보내지 못했어요. 잠시 뒤 다시 시도해 주세요.") : null;
+          }}
+        />
       </Card>
     </>
   );
+}
+
+// 직접 편집·직접 추가 → 서버 요청 모양. 정량 성과(metrics)는 보내지 않는다 = 지금 표 유지 (FE 결정 2026-10-26)
+function toEpisodeRequest(f: EpisodeFields) {
+  return { title: f.title.trim(), role: f.role.trim() || null, problem: f.problem.trim() || null, solution: f.solution.trim() || null, result: f.result.trim() || null };
 }
