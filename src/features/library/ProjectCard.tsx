@@ -3,7 +3,7 @@ import { Badge, Tag } from "@/shared/ui/Badge";
 import { ButtonLink } from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
 import { cx } from "@/shared/ui/cx";
-import type { LibraryProject } from "./mock";
+import type { LibraryProject } from "./library";
 import { ReregisterButton } from "./ReregisterButton";
 import styles from "./Library.module.css";
 
@@ -65,7 +65,7 @@ export function ProjectCard({ project }: { project: LibraryProject }) {
 
       <ul className={styles.episodes}>
         {project.episodes.map((ep, index) => (
-          <li key={ep.title} className={styles.episode}>
+          <li key={ep.id} className={styles.episode}>
             <span className={styles.episodeNum}>사례 {index + 1}</span>
             <span>
               <strong>{ep.title}</strong>
