@@ -4,17 +4,14 @@
 // - 동의는 처음에 체크되어 있지 않다. 미리 체크된 동의는 사용자가 직접 동의한 것으로 보기 어려워서다
 //   (디자인 index.html 은 미리 체크 → FE 결정으로 바꿈, C-02 S01 에 기록)
 // - 로그인은 Google·카카오만 (D-8). 이메일 로그인은 MVP 이후
-//
-// ④ 에서 붙일 것 (C-02 S01):
-// - 버튼을 누르면 소셜 로그인 시작 → 로그인 후 돌아올 주소. 지금은 처음 가입한 사용자처럼 S02(/skills)로 바로 간다
-// - 로그인 후 갈 화면 판단 (확인할 것 3: 처음 가입 → S02, 온보딩 중 → 하던 단계, 끝남 → S06)
-// - 동의 기록 저장 (동의 여부·약관 버전·시각, BE-03)
+// - 버튼을 누르면 동의를 기억해 두고(loginConsent.ts) 소셜 로그인으로 간다. 돌아오면 S01(app/page.tsx)이 동의를 기록하고 갈 화면으로 보낸다
 import { useState } from "react";
 import { routes } from "@/shared/routes";
-import { Button, ButtonLink } from "@/shared/ui/Button";
+import { Button, ButtonAnchor } from "@/shared/ui/Button";
 import { Callout } from "@/shared/ui/Callout";
 import { Card } from "@/shared/ui/Card";
 import { Checkbox } from "@/shared/ui/Field";
+import { rememberLoginConsent } from "./loginConsent";
 import styles from "./Start.module.css";
 
 const PROVIDERS = [
@@ -22,7 +19,8 @@ const PROVIDERS = [
   { id: "kakao", label: "카카오 계정으로 계속" },
 ] as const;
 
-export function StartCard() {
+// loginFailed: 소셜 로그인이 실패해서 BE 가 /?login=failed 로 돌려보냈을 때
+export function StartCard({ loginFailed = false }: { loginFailed?: boolean }) {
   const [agreed, setAgreed] = useState(false);
 
   return (
@@ -34,6 +32,12 @@ export function StartCard() {
         </h2>
         <p className={styles.startDesc}>계정을 연결하면 바로 경험 정리를 시작해요.</p>
       </div>
+
+      {loginFailed && (
+        <Callout tone="bad" icon="alert" role="alert">
+          로그인하지 못했어요. 잠시 뒤 다시 시도해 주세요.
+        </Callout>
+      )}
 
       {/* 동의는 로그인 전에 받는다. 그래서 소셜 버튼보다 위에 둔다 (기획서 v1.25, design/index.html) */}
       <Checkbox checked={agreed} onChange={(event) => setAgreed(event.target.checked)} aria-describedby="privacy">
@@ -47,9 +51,9 @@ export function StartCard() {
       <div className={styles.providers}>
         {PROVIDERS.map((p) =>
           agreed ? (
-            <ButtonLink key={p.id} size="lg" href={routes.skills}>
+            <ButtonAnchor key={p.id} size="lg" href={routes.login(p.id)} onClick={rememberLoginConsent}>
               {p.label}
-            </ButtonLink>
+            </ButtonAnchor>
           ) : (
             // 링크(<a>)는 막을 수 없어서, 동의 전에는 눌리지 않는 버튼으로 보여 준다 (S04 재구성 버튼과 같은 방식)
             <Button key={p.id} size="lg" disabled aria-describedby="start-hint">

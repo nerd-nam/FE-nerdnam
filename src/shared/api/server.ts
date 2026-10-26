@@ -15,7 +15,10 @@ import type { paths } from "./schema";
 // 쓰는 법:
 //   const api = await serverApi(routes.applyList);         // 지금 화면 주소 (동의 화면에서 돌아올 곳)
 //   const postings = data(await api.GET("/api/job-postings"));
-export async function serverApi(currentPath: string) {
+//
+// anonymous: 로그인 안 한 사람도 보는 화면(S01)에서 쓴다. 401 이어도 S01 로 보내지 않고 응답을 그대로 돌려준다
+// (S01 에서 S01 로 보내면 끝없이 돈다)
+export async function serverApi(currentPath: string, { anonymous = false } = {}) {
   // 사용자 데이터는 요청이 올 때마다 새로 묻는다(미리 만들어 두지 않음).
   // openapi-fetch 가 요청마다 Math.random() 으로 번호를 붙이는데, 이 줄이 없으면 Next.js 가 "미리 만들기 중 바뀌는 값"이라고 오류를 낸다
   await connection();
@@ -26,7 +29,7 @@ export async function serverApi(currentPath: string) {
   api.use({
     async onResponse({ response }) {
       // 로그인이 안 됐거나 풀림 → S01
-      if (response.status === 401) redirect(routes.start);
+      if (response.status === 401 && !anonymous) redirect(routes.start);
       // 약관 동의가 필요함 → S01-2, 동의한 뒤 이 화면으로 돌아온다
       if (response.status === 403) {
         const body: unknown = await response.clone().json().catch(() => null);

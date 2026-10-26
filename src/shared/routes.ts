@@ -2,6 +2,8 @@
 // 화면 ID(S01 …)는 기획서 6장 기준.
 export const routes = {
   start: "/", // S01
+  // 소셜 로그인 시작 (BE 주소, Next.js 가 대신 전달). 끝나면 BE 가 S01 로 돌려보낸다(실패면 /?login=failed)
+  login: (provider: "google" | "kakao") => `/oauth2/authorization/${provider}`,
   // S01-2 약관 동의. next: 동의한 뒤 돌아갈 화면 (403 CONSENT_REQUIRED 를 받은 화면)
   consent: (next?: string) => `/consent${next ? `?next=${encodeURIComponent(next)}` : ""}`,
   skills: "/skills", // S02

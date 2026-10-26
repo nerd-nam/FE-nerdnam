@@ -1,13 +1,24 @@
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { FinishLogin } from "@/features/start/FinishLogin";
+import { nextStepPath } from "@/features/start/onboarding";
 import { StartCard } from "@/features/start/StartCard";
 import styles from "@/features/start/Start.module.css";
+import { data, serverApi } from "@/shared/api/server";
 import { Footer } from "@/shared/layout/Footer";
 import { Header } from "@/shared/layout/Header";
 import { Page } from "@/shared/layout/Page";
+import { routes } from "@/shared/routes";
 import { Icon } from "@/shared/ui/Icon";
 
-// S01 시작하기 (주소: /) · 작업: FE-04 (지금: ① 모양 · ② 나누기 · ③ 움직임(화면 안에서만), ④ 로그인 연결 전)
+// S01 시작하기 (주소: /) · 작업: FE-04 (① 모양 · ② 나누기 · ③ 움직임 · ④ 로그인 연결)
 // 왼쪽 소개·흐름은 움직이지 않아서 여기(서버)서 그리고, 동의에 따라 버튼이 바뀌는 시작하기 카드만 클라이언트 컴포넌트다.
 // 제목(<h1>)이 디자인처럼 큰 글씨라 공용 PageHead 대신 직접 만든다.
+//
+// 로그인 흐름 (C-02 S01): 소셜 로그인이 끝나면 BE 가 여기(/)로 돌려보낸다. 그래서 열릴 때 서버에서 로그인 상태를 본다(StartGate).
+// - 로그인 안 함 → 시작하기 카드 (실패해서 돌아왔으면 /?login=failed → 오류 안내)
+// - 로그인 + 동의 기록 있음 → 갈 화면으로 (GET /api/me/onboarding, onboarding.ts)
+// - 로그인 + 동의 기록 없음 → 로그인 마무리(FinishLogin): S01 에서 받은 동의를 기록하거나 약관 동의 화면으로
 
 // 서비스 흐름 3단계 (디자인 index.html)
 const STEPS = [
@@ -16,7 +27,7 @@ const STEPS = [
   { title: "작성 방향 받기", desc: "요건별 근거 경험, 서류 4종의 방향, 포트폴리오 이미지 프롬프트까지.", meta: "약 1분" },
 ];
 
-export default function StartPage() {
+export default function StartPage({ searchParams }: PageProps<"/">) {
   return (
     <>
       <Header variant="start" />
@@ -53,10 +64,23 @@ export default function StartPage() {
             </p>
           </section>
 
-          <StartCard />
+          {/* 로그인 상태를 묻는 동안은 시작하기 카드를 먼저 보여 준다 */}
+          <Suspense fallback={<StartCard />}>
+            {searchParams.then((sp) => (
+              <StartGate loginFailed={sp.login === "failed"} />
+            ))}
+          </Suspense>
         </div>
       </Page>
       <Footer />
     </>
   );
+}
+
+async function StartGate({ loginFailed }: { loginFailed: boolean }) {
+  const api = await serverApi(routes.start, { anonymous: true });
+  const me = await api.GET("/api/me");
+  if (me.response.status === 401) return <StartCard loginFailed={loginFailed} />;
+  if (data(me).consentRequired) return <FinishLogin />;
+  redirect(nextStepPath(data(await api.GET("/api/me/onboarding"))));
 }

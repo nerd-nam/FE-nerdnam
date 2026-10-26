@@ -20,10 +20,11 @@ const nextConfig: NextConfig = {
   // 주소창은 바뀌지 않는다(redirects 와 다름). 위에서부터 먼저 맞는 규칙을 쓴다.
   async rewrites() {
     return [
-      // 가짜 서버(Prism)는 로그인·CSRF 토큰을 흉내 내지 못해서, 그 두 가지만 우리 개발용 대역(app/dev-api)이 맡는다
+      // 가짜 서버(Prism)는 로그인·로그아웃·CSRF 토큰을 흉내 내지 못해서, 그것만 우리 개발용 대역(app/dev-api)이 맡는다
       ...(USE_PRISM
         ? [
             { source: "/oauth2/authorization/:provider", destination: "/dev-api/login" },
+            { source: "/api/auth/logout", destination: "/dev-api/logout" },
             { source: "/api/auth/csrf", destination: "/dev-api/csrf" },
           ]
         : [{ source: "/oauth2/:path*", destination: `${API_ORIGIN}/oauth2/:path*` }]),
