@@ -28,6 +28,20 @@ section.startCard { flex: 1 1 380px; min-width: 0; gap: 20px; scroll-margin-top:
 .startTitle { font-size: 22px; font-weight: 700; }
 .startDesc { font-size: 15px; color: var(--muted); }
 .providers { display: flex; flex-direction: column; gap: 10px; }
+
+/* 소셜 로그인 버튼 (SocialLoginButton.tsx): 각 회사 버튼 가이드의 색. 두 버튼은 크기·모양이 같다.
+   심볼과 문구를 함께 가운데 정렬한다(카카오 가이드가 허용하는 배치, Google 은 로고 오른쪽 10px 뒤 문구) */
+.social {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; min-height: 48px; padding: 0 16px; border-radius: 12px;
+  font: inherit; font-size: 15px; font-weight: 600; text-decoration: none; cursor: pointer;
+}
+.socialMark { width: 18px; height: 18px; flex: none; }
+/* 가이드 밖의 색을 쓰지 않으려고 마우스를 올렸을 때도 색을 바꾸지 않는다 (글자색은 전역 a:hover 를 덮어 고정) */
+.google, .google:hover { background: #FFFFFF; border: 1px solid #747775; color: #1F1F1F; }
+.kakao, .kakao:hover { background: #FEE500; border: 1px solid #FEE500; color: rgba(0, 0, 0, 0.85); }
+/* 동의 전: 모양은 그대로 두고 흐리게 (회사별 색을 회색으로 바꾸지 않는다) */
+.social:disabled { opacity: 0.45; cursor: not-allowed; }
 .hint { font-size: 13px; color: var(--subtle); }
 
 @media (max-width: 720px) {

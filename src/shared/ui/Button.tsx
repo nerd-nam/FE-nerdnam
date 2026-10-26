@@ -34,12 +34,6 @@ export function ButtonLink({ variant, size, block, className, ...rest }: StylePr
   return <Link className={buttonClass({ variant, size, block }, className)} {...rest} />;
 }
 
-// 우리 화면이 아닌 곳으로 페이지째 이동하는 버튼처럼 생긴 링크 (소셜 로그인 시작 /oauth2/… 등)
-// Link 는 우리 화면 사이를 빠르게 오가려고 화면 데이터를 미리 받아 두는데, 서버로 가는 주소에서는 그러면 안 된다.
-export function ButtonAnchor({ variant, size, block, className, ...rest }: StyleProps & ComponentProps<"a">) {
-  return <a className={buttonClass({ variant, size, block }, className)} {...rest} />;
-}
-
 // 아이콘만 있는 버튼. 글자가 없으니 label(스크린리더용 이름)이 반드시 필요하다.
 export function IconButton({ label, className, type = "button", ...rest }: { label: string } & ComponentProps<"button">) {
   return <button type={type} aria-label={label} className={cx(styles.iconBtn, className)} {...rest} />;

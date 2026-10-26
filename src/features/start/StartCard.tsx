@@ -3,21 +3,17 @@
 // S01 오른쪽 "시작하기" 카드. 움직이는 부분: 개인정보 동의를 체크해야 소셜 버튼을 누를 수 있다.
 // - 동의는 처음에 체크되어 있지 않다. 미리 체크된 동의는 사용자가 직접 동의한 것으로 보기 어려워서다
 //   (디자인 index.html 은 미리 체크 → FE 결정으로 바꿈, C-02 S01 에 기록)
-// - 로그인은 Google·카카오만 (D-8). 이메일 로그인은 MVP 이후
+// - 로그인은 Google·카카오만 (D-8). 이메일 로그인은 MVP 이후. 버튼 모양·문구는 각 회사 가이드를 따른다(SocialLoginButton.tsx)
 // - 버튼을 누르면 동의를 기억해 두고(loginConsent.ts) 소셜 로그인으로 간다. 돌아오면 S01(app/page.tsx)이 동의를 기록하고 갈 화면으로 보낸다
 import { useState } from "react";
-import { routes } from "@/shared/routes";
-import { Button, ButtonAnchor } from "@/shared/ui/Button";
 import { Callout } from "@/shared/ui/Callout";
 import { Card } from "@/shared/ui/Card";
 import { Checkbox } from "@/shared/ui/Field";
 import { rememberLoginConsent } from "./loginConsent";
+import { SocialLoginButton, type Provider } from "./SocialLoginButton";
 import styles from "./Start.module.css";
 
-const PROVIDERS = [
-  { id: "google", label: "Google 계정으로 계속" },
-  { id: "kakao", label: "카카오 계정으로 계속" },
-] as const;
+const PROVIDERS: Provider[] = ["google", "kakao"];
 
 // loginFailed: 소셜 로그인이 실패해서 BE 가 /?login=failed 로 돌려보냈을 때
 export function StartCard({ loginFailed = false }: { loginFailed?: boolean }) {
@@ -49,18 +45,9 @@ export function StartCard({ loginFailed = false }: { loginFailed?: boolean }) {
       </Callout>
 
       <div className={styles.providers}>
-        {PROVIDERS.map((p) =>
-          agreed ? (
-            <ButtonAnchor key={p.id} size="lg" href={routes.login(p.id)} onClick={rememberLoginConsent}>
-              {p.label}
-            </ButtonAnchor>
-          ) : (
-            // 링크(<a>)는 막을 수 없어서, 동의 전에는 눌리지 않는 버튼으로 보여 준다 (S04 재구성 버튼과 같은 방식)
-            <Button key={p.id} size="lg" disabled aria-describedby="start-hint">
-              {p.label}
-            </Button>
-          ),
-        )}
+        {PROVIDERS.map((p) => (
+          <SocialLoginButton key={p} provider={p} disabled={!agreed} describedBy="start-hint" onClick={rememberLoginConsent} />
+        ))}
       </div>
       {!agreed && (
         <p id="start-hint" className={styles.hint}>
