@@ -6,19 +6,25 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "api:types": "openapi-typescript ../SPEC-nerdnam/contracts/web-api.openapi.yaml -o src/shared/api/schema.d.ts",
+    "mock:api": "prism mock ../SPEC-nerdnam/contracts/web-api.openapi.yaml --port 4010"
   },
   "dependencies": {
     "next": "16.4.2",
+    "openapi-fetch": "^0.17.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
+    "@stoplight/prism-cli": "^5.16.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
+    "openapi-typescript": "^7.13.0",
     "typescript": "^5"
   }
 }

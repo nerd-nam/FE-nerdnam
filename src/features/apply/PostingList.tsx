@@ -3,16 +3,19 @@
 // S10 공고 목록 · 작업: FE-18 (디자인 design/apply.html, C-02 S10)
 // 공고마다 카드 한 장: 상태 배지 · 회사 · 날짜 · 포지션 · (완료면) 충족 수 · 상태에 맞는 버튼 · 삭제.
 // 삭제하면 목록에서 빠져야 해서 목록을 여기서 들고 있는 클라이언트 컴포넌트다.
-// ④ 에서 붙일 것: 삭제 요청(BE 공고 삭제 API). 지금은 화면 목록에서만 뺀다.
+// 처음 목록은 페이지가 서버에서 가져와 넘겨준다. 삭제는 브라우저에서 서버에 보내고(DELETE /api/job-postings/{id}), 성공하면 목록에서 뺀다.
 import { useState } from "react";
+import { api } from "@/shared/api/client";
+import { problemMessage } from "@/shared/api/problem";
 import { NEW_JD_ID, routes } from "@/shared/routes";
 import { Badge } from "@/shared/ui/Badge";
 import { Button, ButtonLink } from "@/shared/ui/Button";
+import { Callout } from "@/shared/ui/Callout";
 import { Card } from "@/shared/ui/Card";
 import { Dialog } from "@/shared/ui/Dialog";
 import { Icon } from "@/shared/ui/Icon";
 import { useFocusAfterRender } from "@/shared/useFocusAfterRender";
-import type { PostingStatus, PostingSummary } from "./mock";
+import type { PostingStatus, PostingSummary } from "./posting";
 import styles from "./Apply.module.css";
 
 // 상태별 배지와 날짜 뒤에 붙는 말
@@ -26,7 +29,33 @@ const STATUS_VIEW = {
 export function PostingList({ initialPostings }: { initialPostings: PostingSummary[] }) {
   const [postings, setPostings] = useState(initialPostings);
   const [deleting, setDeleting] = useState<PostingSummary | null>(null); // 삭제 확인창에 띄운 공고
+  const [pending, setPending] = useState(false); // 서버 답을 기다리는 중 (삭제 버튼을 두 번 누르지 않게)
+  const [deleteError, setDeleteError] = useState<string | null>(null); // 삭제 실패 문장 (확인창 안에 보임)
   const focusAfter = useFocusAfterRender();
+
+  function closeDialog() {
+    setDeleting(null);
+    setDeleteError(null);
+  }
+
+  async function confirmDelete() {
+    if (!deleting) return;
+    setPending(true);
+    setDeleteError(null);
+    const { error } = await api.DELETE("/api/job-postings/{postingId}", { params: { path: { postingId: Number(deleting.jdId) } } });
+    setPending(false);
+    // 404(이미 지워짐)는 목록에서 빼는 것이 맞으니 실패로 보지 않는다
+    if (error && error.status !== 404) {
+      setDeleteError(problemMessage(error, "공고를 삭제하지 못했어요. 잠시 뒤 다시 시도해 주세요."));
+      return;
+    }
+    // 지운 뒤 다음 카드(마지막이었으면 윗 카드)의 삭제 버튼으로, 다 지웠으면 "첫 공고 입력하기"로 커서를 옮긴다 (FE-16)
+    const index = postings.findIndex((p) => p.jdId === deleting.jdId);
+    const left = postings.length - 1;
+    focusAfter(left === 0 ? "first-posting" : `posting-del-${Math.min(index, left - 1)}`);
+    setPostings((prev) => prev.filter((p) => p.jdId !== deleting.jdId));
+    closeDialog();
+  }
 
   if (postings.length === 0) {
     return (
@@ -95,28 +124,22 @@ export function PostingList({ initialPostings }: { initialPostings: PostingSumma
 
       <Dialog
         open={deleting !== null}
-        onClose={() => setDeleting(null)}
+        onClose={closeDialog}
         title="이 공고를 삭제할까요?"
         actions={
           <>
-            <Button onClick={() => setDeleting(null)}>취소</Button>
-            <Button
-              variant="danger"
-              onClick={() => {
-                // TODO(④): 서버에 공고 삭제 요청. 지금은 화면 목록에서만 뺀다
-                // 지운 뒤 다음 카드(마지막이었으면 윗 카드)의 삭제 버튼으로, 다 지웠으면 "첫 공고 입력하기"로 커서를 옮긴다 (FE-16)
-                const index = postings.findIndex((p) => p.jdId === deleting?.jdId);
-                const left = postings.length - 1;
-                focusAfter(left === 0 ? "first-posting" : `posting-del-${Math.min(index, left - 1)}`);
-                setPostings((prev) => prev.filter((p) => p.jdId !== deleting?.jdId));
-                setDeleting(null);
-              }}
-            >
-              삭제
+            <Button onClick={closeDialog}>취소</Button>
+            <Button variant="danger" disabled={pending} onClick={confirmDelete}>
+              {pending ? "삭제하는 중…" : "삭제"}
             </Button>
           </>
         }
       >
+        {deleteError && (
+          <Callout tone="bad" icon="alert" role="alert">
+            {deleteError}
+          </Callout>
+        )}
         <p>
           <strong>
             {deleting?.company} · {deleting?.position}
