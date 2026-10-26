@@ -95,6 +95,8 @@ export function MonthField({ id, label, value, onChange, onBlur, disabled, inval
         aria-expanded={open}
         aria-controls={pickerId}
         disabled={disabled}
+        // 누를 때 입력칸에서 커서가 빠지며 달력이 닫혔다가 다시 열리지 않게 (아래 달력 상자와 같은 이유)
+        onMouseDown={(event) => event.preventDefault()}
         onClick={toggle}
       >
         <Icon name="calendar" size="sm" />
@@ -106,6 +108,9 @@ export function MonthField({ id, label, value, onChange, onBlur, disabled, inval
           role="dialog"
           aria-label={`${label} 고르기`}
           className={cx(styles.picker, align === "end" && styles.alignEnd)}
+          // 마우스로 누를 때 커서를 옮기지 않는다. Safari·맥 Firefox 는 버튼을 눌러도 커서를 버튼으로 옮기지 않아서,
+          // 누르는 순간 "밖으로 나감"(위 onBlur)으로 보고 달력을 닫아 버려 달을 골라도 값이 안 들어갔다. 클릭(pick)은 그대로 된다
+          onMouseDown={(event) => event.preventDefault()}
           onKeyDown={(event) => {
             if (event.key === "Escape") {
               setOpen(false);
