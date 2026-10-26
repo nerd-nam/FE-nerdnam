@@ -114,12 +114,11 @@ function EpisodeBody(props: EpisodeCardProps & { bodyId: string }) {
   const versionNumbers = Object.keys(episode.versions)
     .map(Number)
     .sort((a, b) => a - b);
-  const latest = versionNumbers[versionNumbers.length - 1];
   const shown = episode.versions[viewingVersion] ?? currentOf(episode);
   const previous = episode.versions[viewingVersion - 1];
   const resultChanged = previous && previous.result !== shown.result;
-  // 이전 버전을 보고 있는지. 이전 버전은 보기만 하고, 그 버전으로 작업하려면 "이 버전에서 이어서 하기"로 최신으로 만든다 (FE 결정 2026-10-26).
-  // 답하기·고치기·확정은 모두 최신 버전에 대해 동작해서, 이전 버전을 보는 중에는 숨긴다
+  // 지금 쓰는 버전이 아닌 다른 버전을 보고 있는지. 다른 버전은 보기만 하고, 그 버전으로 작업하려면 "이 버전에서 이어서 하기"를 누른다 (FE 결정 2026-10-26).
+  // 답하기·고치기·확정은 모두 지금 쓰는 버전에 대해 동작해서, 다른 버전을 보는 중에는 숨긴다
   const viewingOlder = viewingVersion !== episode.currentVersion;
   const pending = currentOf(episode).questions;
   // 고칠 수 있는 건 검토 중인 사례뿐이다. 확정·제외한 사례는 읽기 전용이고, 고치려면 "다시 검토하기"를 먼저 누른다 (기획서 v1.19)
@@ -152,19 +151,22 @@ function EpisodeBody(props: EpisodeCardProps & { bodyId: string }) {
         {isReviewing && versionNumbers.length > 1 && (
           <Segmented
             label="버전"
-            options={versionNumbers.map((v) => ({ value: String(v), label: v === latest ? `v${v} · 최신` : `v${v}` }))}
+            // "사용 중" = 지금 쓰는 버전. 이어서 하기로 예전 버전을 쓰게 되면 가장 큰 번호가 아닐 수 있다 (FE 결정 2026-10-26, BE 변경 요청)
+            options={versionNumbers.map((v) => ({ value: String(v), label: v === episode.currentVersion ? `v${v} · 사용 중` : `v${v}` }))}
             value={String(viewingVersion)}
             onChange={(v) => props.onViewVersion(Number(v))}
           />
         )}
       </div>
 
-      {/* 이전 버전을 볼 때: 보기만 하고, "이 버전에서 이어서 하기"를 누르면 이 버전을 복사해 새 최신 버전을 만든다 (되돌리기, 기획서 F2) */}
+      {/* 다른 버전을 볼 때: 보기만 하고, "이 버전에서 이어서 하기"를 누르면 이 버전을 지금 쓰는 버전으로 바꾼다 (되돌리기, 기획서 F2).
+          서버(restore)는 아직 이 버전을 복사해 새 버전을 만든다 — 새 버전 없이 바꾸도록 BE 에 요청함 */}
       {isReviewing && viewingOlder && (
         <div className={styles.olderNote}>
           <span>
-            이전 버전(v{viewingVersion})을 보고 있어요. 지금 쓰는 내용은 최신 버전(v{episode.currentVersion})이에요. 이 버전으로 고치거나 확정하려면 이어서
-            하기를 눌러 주세요.
+            {/* 조사가 번호에 따라 바뀌지 않게 "v1 버전을", "v3 버전이에요"로 쓴다 */}
+            v{viewingVersion} 버전을 보고 있어요. 지금 쓰는 건 v{episode.currentVersion} 버전이에요. 이 버전으로 고치거나 확정하려면 이어서 하기를
+            눌러 주세요.
           </span>
           <Button size="sm" disabled={busy} onClick={() => props.onContinueFrom(viewingVersion)}>
             이 버전에서 이어서 하기
