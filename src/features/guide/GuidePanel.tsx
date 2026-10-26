@@ -1,11 +1,10 @@
-import type { GuideTab } from "@/shared/routes";
 import { Tag } from "@/shared/ui/Badge";
 import { Card, CardDesc } from "@/shared/ui/Card";
 import { CopyButton } from "@/shared/ui/CopyButton";
 import { EvidenceLink } from "@/shared/ui/EvidenceLink";
 import { Icon } from "@/shared/ui/Icon";
 import { Table } from "@/shared/ui/Table";
-import type { CareerPreview, CoverageRow, Guide, GuideDoc, RewriteRow } from "./mock";
+import type { CoverageRow, GuideContent, GuideDoc, RewriteRow } from "./guide";
 import { ImagePanel } from "./ImagePanel";
 import { PageFlow } from "./PageFlow";
 import styles from "./Guide.module.css";
@@ -13,20 +12,20 @@ import styles from "./Guide.module.css";
 // S09 탭 하나의 내용 (원본: design/assets/js/guide.js 의 render)
 // 네 탭 공통: 핵심 메시지 → 문단 구성 → (탭 전용 블록) → 강조할 키워드·피해야 할 것
 // 움직이는 부분은 "구성 복사" 버튼뿐이라 그것만 클라이언트 컴포넌트(CopyButton)다.
-export function GuidePanel({ tab, guide }: { tab: GuideTab; guide: Guide }) {
-  if (tab === "image") return <ImagePanel image={guide.image} />;
+export function GuidePanel({ content }: { content: GuideContent }) {
+  if (content.tab === "image") return <ImagePanel image={content.image} />;
 
-  const doc = guide.docs[tab];
+  const { doc } = content;
   return (
     <>
       <MessageBlock doc={doc} />
       <OutlineBlock doc={doc} />
-      {tab === "intro" && <CoverageBlock rows={guide.docs.intro.coverage} />}
-      {tab === "portfolio" && <PageFlow flow={guide.docs.portfolio.pageFlow} />}
-      {tab === "career" && (
+      {content.tab === "intro" && <CoverageBlock rows={content.coverage} />}
+      {content.tab === "portfolio" && <PageFlow pages={content.pages} />}
+      {content.tab === "career" && (
         <>
-          <RewriteBlock rows={guide.docs.career.rewrites} />
-          <PreviewBlock preview={guide.docs.career.preview} />
+          <RewriteBlock rows={content.rewrites} />
+          <PreviewBlock rows={content.rewrites} />
         </>
       )}
       <KeywordAvoidBlock doc={doc} />
@@ -59,15 +58,16 @@ function OutlineBlock({ doc }: { doc: GuideDoc }) {
       </div>
       <ol className={styles.outlineList}>
         {doc.outline.map((item, i) => (
-          <li key={item.title} className={styles.outlineItem}>
+          // AI 가 만든 글이라 제목이 겹칠 수 있어 순서로 구분한다 (목록은 바뀌지 않는다)
+          <li key={i} className={styles.outlineItem}>
             <span className={styles.num}>{i + 1}</span>
             <div className={styles.outlineBody}>
               <strong className={styles.outlineTitle}>{item.title}</strong>
               <p className={styles.outlineDesc}>{item.desc}</p>
               {item.sources.length > 0 && (
                 <div className={styles.sources}>
-                  {item.sources.map((source) => (
-                    <EvidenceLink key={source.label} evidence={source} className={styles.src}>
+                  {item.sources.map((source, j) => (
+                    <EvidenceLink key={j} evidence={source} className={styles.src}>
                       <Icon name="link" size="sm" />
                       근거 · {source.label}
                     </EvidenceLink>
@@ -138,16 +138,15 @@ function RewriteBlock({ rows }: { rows: RewriteRow[] }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <tr key={row.from}>
+          {rows.map((row, i) => (
+            <tr key={i}>
               <td className={styles.muted}>{row.from}</td>
               <td aria-hidden="true" className={styles.arrowCell}>
                 <Icon name="arrow" size="sm" />
               </td>
               <td className={styles.strong}>{row.to}</td>
-              <td>
-                <Tag variant="accent">{row.requirement}</Tag>
-              </td>
+              {/* 리포트에 없는 요건(그 뒤 지움 등)이면 비워 둔다 */}
+              <td>{row.requirement && <Tag variant="accent">{row.requirement}</Tag>}</td>
             </tr>
           ))}
         </tbody>
@@ -156,7 +155,9 @@ function RewriteBlock({ rows }: { rows: RewriteRow[] }) {
   );
 }
 
-function PreviewBlock({ preview }: { preview: CareerPreview }) {
+// 경력기술서 미리보기: 바꿔 쓰기 표의 "바꾼 표현"만 종이 모양 목록으로 (C-02 S09 확인할 것 3 — 웹이 만든다).
+// 회사·팀·기간은 AI 응답에 없어 추측해 채우지 않고 직접 채울 자리로 둔다 (FE 결정 2026-10-26)
+function PreviewBlock({ rows }: { rows: RewriteRow[] }) {
   return (
     <Card aria-labelledby="preview-title">
       <div className={styles.between}>
@@ -169,15 +170,14 @@ function PreviewBlock({ preview }: { preview: CareerPreview }) {
       <div className={styles.paper}>
         <div className={styles.paperHead}>
           <span className={styles.paperCompany}>
-            {preview.company} <span className={styles.paperTeam}>{preview.team}</span>
+            [회사명] <span className={styles.paperTeam}>[팀 · 직무]</span>
           </span>
-          <span className={styles.paperPeriod}>{preview.period}</span>
+          <span className={styles.paperPeriod}>[기간]</span>
         </div>
         <ul className={styles.paperList}>
-          {preview.items.map((item) => (
-            <li key={item.title}>
-              <strong className={styles.paperItem}>{item.title}</strong>
-              <div className={styles.paperDetail}>– {item.detail}</div>
+          {rows.map((row, i) => (
+            <li key={i}>
+              <strong className={styles.paperItem}>{row.to}</strong>
             </li>
           ))}
         </ul>

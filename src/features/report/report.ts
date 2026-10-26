@@ -74,13 +74,17 @@ export function toReport(r: FitReportView): Report {
 }
 
 // 근거 카드 → 갈 곳을 정할 수 있는 모양 (C-02 S08 확인할 것 2·7, 계약 GET /report 설명)
+// S09 "이 방향에 쓰인 근거"(citations)도 같은 모양이라 같이 쓴다 (C-02 S09 확인할 것 5)
 // - 지워진 프로젝트·사례(deleted): 이름만 남고 projectId 가 null → 링크 없이 "삭제된 경험"
 // - 사례: projectId + sourceId(사례 번호), 프로젝트 요약: projectId. reregistering 이면 S06 카드로 간다
 // - 기술·경력: S06
-function toEvidence(e: EvidenceView): Evidence {
+type EvidenceSource = Pick<EvidenceView, "sourceType" | "projectId" | "deleted" | "reregistering" | "label"> & { sourceId: number | null };
+
+export function toEvidence(e: EvidenceSource): Evidence {
   if (e.sourceType === "skill" || e.sourceType === "career") return { kind: e.sourceType, label: e.label };
   if (e.deleted || e.projectId === null) return { kind: "deleted", label: e.label };
   const projectId = String(e.projectId);
-  if (e.sourceType === "project_summary") return { kind: "project", label: e.label, projectId, reregistering: e.reregistering };
+  // 사례 번호가 없으면 사례를 펼칠 수 없으니 프로젝트로 보낸다
+  if (e.sourceType === "project_summary" || e.sourceId === null) return { kind: "project", label: e.label, projectId, reregistering: e.reregistering };
   return { kind: "episode", label: e.label, projectId, episodeId: String(e.sourceId), reregistering: e.reregistering };
 }

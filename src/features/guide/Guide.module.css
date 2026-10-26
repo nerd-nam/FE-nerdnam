@@ -61,7 +61,6 @@ section.outline > .between { margin-bottom: 8px; align-items: center; }
 .paperPeriod { font-size: 14px; color: var(--muted); }
 .paperList { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 12px; font-size: 15px; line-height: 1.65; }
 .paperItem { font-weight: 600; }
-.paperDetail { font-size: 14px; color: var(--muted); }
 
 /* 강조할 키워드 · 피해야 할 것 */
 .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }

@@ -2,7 +2,7 @@ import { Tag } from "@/shared/ui/Badge";
 import { Callout } from "@/shared/ui/Callout";
 import { Card, CardDesc } from "@/shared/ui/Card";
 import { CopyButton } from "@/shared/ui/CopyButton";
-import type { ImageGuide } from "./mock";
+import type { ImageGuide } from "./guide";
 import styles from "./ImagePanel.module.css";
 
 // S09 이미지 프롬프트 탭 · 작업: FE-15 (원본: design/assets/js/guide.js 의 imagePanel)
@@ -15,11 +15,11 @@ export function ImagePanel({ image }: { image: ImageGuide }) {
         이미지 생성은 분위기를 전하는 그림에만 쓰세요. 글자·숫자가 정확해야 하는 도식과 차트는 아래 “도구로 만들 시각자료”를 참고하세요.
       </Callout>
 
-      {image.prompts.map((p) => (
-        <Card key={p.id} as="article" aria-labelledby={`${p.id}-title`} className={styles.prompt}>
+      {image.prompts.map((p, i) => (
+        <Card key={i} as="article" aria-labelledby={`prompt-${i}-title`} className={styles.prompt}>
           <div className={styles.head}>
             <div className={styles.titleStack}>
-              <h2 id={`${p.id}-title`} className={styles.title}>
+              <h2 id={`prompt-${i}-title`} className={styles.title}>
                 {p.title}
               </h2>
               <CardDesc>
@@ -50,8 +50,8 @@ export function ImagePanel({ image }: { image: ImageGuide }) {
           도구로 만들 시각자료
         </h2>
         <ul className={styles.toolList}>
-          {image.toolVisuals.map((v) => (
-            <li key={v.name} className={styles.toolItem}>
+          {image.toolVisuals.map((v, i) => (
+            <li key={i} className={styles.toolItem}>
               <span className={styles.toolName}>{v.name}</span>
               <span className={styles.toolWhere}>{v.where}</span>
               <Tag variant="flat">{v.tool}</Tag>

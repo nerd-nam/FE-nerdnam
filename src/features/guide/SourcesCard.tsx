@@ -1,6 +1,6 @@
 import { Card } from "@/shared/ui/Card";
 import { EvidenceLink } from "@/shared/ui/EvidenceLink";
-import type { GuideSource } from "./mock";
+import type { GuideSource } from "./guide";
 import styles from "./Guide.module.css";
 
 // S09 오른쪽 "이 방향에 쓰인 근거" (C-02 S09 조회: 근거 이름, 원본으로 갈 id, 관련 요건 수)
@@ -11,9 +11,11 @@ export function SourcesCard({ sources }: { sources: GuideSource[] }) {
         이 방향에 쓰인 근거
       </h2>
       <p className={styles.meta}>모든 제안은 확정된 내 경험에서만 나와요.</p>
+      {/* 아직 만드는 중·실패이거나 근거 없이 만든 탭 */}
+      {sources.length === 0 && <p className={styles.meta}>이 탭에 쓰인 근거가 아직 없어요.</p>}
       <ul className={styles.sourceList}>
-        {sources.map(({ evidence, requirementCount }) => (
-          <li key={evidence.label} className={styles.sourceItem}>
+        {sources.map(({ evidence, requirementCount }, i) => (
+          <li key={i} className={styles.sourceItem}>
             <EvidenceLink evidence={evidence} className={styles.sourceLink}>
               {evidence.label}
             </EvidenceLink>
