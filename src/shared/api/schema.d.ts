@@ -199,7 +199,7 @@ export interface paths {
         put?: never;
         /**
          * 작성 방향 — 탭 생성·재생성
-         * @description 최신 완료 분석의 탭을 만든다. 첫 생성은 feedback을 생략할 수 있다. 같은 분석에서 두 번째 생성부터는 실패 뒤 다시 요청할 때도 공백 아닌 feedback이 필수이며 없으면 400이다. 새 분석이면 새 탭으로 만들므로 첫 생성 규칙을 적용한다. 같은 탭 진행 중에는 409와 runningJobId를 준다.
+         * @description 최신 완료 분석의 탭을 만든다. 이 분석·이 탭에 완료된 결과가 없으면 feedback 을 생략할 수 있다 — 첫 생성과, 생성이 실패한 뒤 다시 시도할 때다. 완료된 결과가 있으면 공백 아닌 feedback 이 필수이며 없으면 400 이다. 새 분석이면 새 탭으로 만들므로 첫 생성 규칙을 적용한다. 같은 탭 진행 중에는 409와 runningJobId를 준다.
          */
         post: operations["WritingGuideController_generate"];
         delete?: never;
