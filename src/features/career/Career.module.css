@@ -36,3 +36,6 @@
 @media (max-width: 720px) {
   .grid2 { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* 삭제 거부 안내창의 연결된 프로젝트 목록 (S02 사용처 목록과 같은 모양) */
+.usageList { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }

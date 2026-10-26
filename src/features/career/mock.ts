@@ -1,5 +1,5 @@
-// S03 에서 쓰는 임시 데이터. API(경력 CRUD, BE-06)가 생기면 서버에서 받아 온다.
-// 내용은 기획서 4.2 와 design/career.html 을 따랐다.
+// 아직 서버에 연결하지 않은 S06 내 경험이 쓰는 경력 임시 데이터. S03 은 서버(GET /api/me/careers)에서 가져온다(career.ts).
+// S06 을 연결하면 이 파일은 지운다. 내용은 기획서 4.2 와 design/career.html 을 따랐다.
 
 // 고용형태 (기획서 4.2)
 export const EMPLOYMENT_TYPES = ["정규직", "계약직", "인턴", "프리랜서"] as const;
@@ -47,12 +47,4 @@ export const MOCK_CAREERS: Career[] = [
   },
 ];
 
-// 새 경력의 빈 양식
-export function emptyCareer(): Career {
-  return { id: "new", company: "", team: "", jobTitle: "", position: "", employmentType: "정규직", start: "", end: null, duties: [""], skills: [] };
-}
-
-// "2023-03" → "2023.03"
-export function formatMonth(value: string) {
-  return value.replace("-", ".");
-}
+export { formatMonth } from "./career";
