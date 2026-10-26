@@ -32,7 +32,7 @@ export function ProjectCard({ project }: { project: LibraryProject }) {
 
   const reregistering = project.status === "reregistering";
   return (
-    // id: /library#p_106 처럼 주소로 이 카드에 바로 올 수 있게 한다 (S08 재등록 중 근거, FE-nerdnam #4)
+    // id: /library#6 처럼 주소로 이 카드에 바로 올 수 있게 한다 (S08 재등록 중 근거, FE-nerdnam #4)
     <Card as="article" id={project.id} className={styles.card}>
       <div className={`${styles.row} ${styles.between}`}>
         <div className={styles.stack}>

@@ -23,7 +23,7 @@
 .episodeSummary { color: var(--muted); }
 
 /* 초안·검토 중 프로젝트: 점선 카드, 가로 배치 */
-/* #p_106 처럼 주소로 온 카드: 화면 맨 위에 붙지 않게 띄운다.
+/* #6 처럼 주소로 온 카드: 화면 맨 위에 붙지 않게 띄운다.
    (:target 테두리는 쓰지 않는다. Next.js 의 화면 이동(Link)으로 오면 브라우저가 :target 을 켜지 않아 새로고침 때만 보이기 때문) */
 .card { scroll-margin-top: 16px; }
 .pending { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px; }

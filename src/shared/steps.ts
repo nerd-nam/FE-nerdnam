@@ -3,8 +3,8 @@ import { routes } from "@/shared/routes";
 
 // 온보딩 단계 (S02~S05). 지난 단계는 "수정" 링크로 돌아갈 수 있다 (기획서 F1).
 // S05 에서는 지금 검토 중인 프로젝트 번호를 넘긴다.
-// - "프로젝트" 단계 링크가 그 프로젝트(/projects/p_102)로 간다
-// - S02·S03 링크에 ?review=p_102 를 붙여, 그 화면에서 "검토로 돌아가기"를 보여 줄 수 있게 한다 (기획서 v1.14, D-9, FE-09)
+// - "프로젝트" 단계 링크가 그 프로젝트(/projects/2)로 간다
+// - S02·S03 링크에 ?review=2 를 붙여, 그 화면에서 "검토로 돌아가기"를 보여 줄 수 있게 한다 (기획서 v1.14, D-9, FE-09)
 // S02~S04 에서는 프로젝트 단계가 아직 지나지 않아 링크가 쓰이지 않으므로 번호 없이 부른다.
 export function onboardingSteps(projectId?: string): Step[] {
   const review = projectId ? `?review=${projectId}` : "";

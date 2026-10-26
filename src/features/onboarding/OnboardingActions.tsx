@@ -10,7 +10,7 @@ import styles from "./Onboarding.module.css";
 type OnboardingActionsProps = {
   prev: { href: string; label?: string };
   next: { href: string; label: string };
-  // S05 검토 중에 온 경우(주소 ?review=p_102) 그 프로젝트 id
+  // S05 검토 중에 온 경우(주소 ?review=2) 그 프로젝트 id
   reviewId?: string;
   // 이동하기 전에 저장할 것이 있는 화면(S02: 바꾼 것을 "다음"에서 한 번에 저장)은 저장 함수를 넘긴다.
   // 성공하면 true → 이동, 실패하면 false → 화면이 오류를 보여 주고 머문다

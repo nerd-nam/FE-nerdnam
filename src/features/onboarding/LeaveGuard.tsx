@@ -17,7 +17,7 @@ import { routes } from "@/shared/routes";
 
 // 이 경로로 가면 검토 결과가 유지된다 (S02 기술스택, S03 경력)
 const KEEP_PATHS: string[] = [routes.skills, routes.career];
-// S04 프로젝트 입력(/projects/p_102, /projects/new). /projects/p_102/review(S05)는 아니다
+// S04 프로젝트 입력(/projects/2, /projects/new). /projects/2/review(S05)는 아니다
 const ORIGINAL_PATH = /^\/projects\/[^/]+$/;
 
 type Mode = "leave-review" | "enter-original";
