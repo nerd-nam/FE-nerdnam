@@ -28,6 +28,16 @@
 .legend { margin-bottom: 4px; font-size: 14px; font-weight: 600; }
 .legendHint { font-weight: 400; color: var(--subtle); }
 .newSkillInput { flex: 1 1 260px; width: auto; }
+.newSkillCategory { flex: 0 1 140px; width: auto; }
+
+/* 칸 아래 빨간 오류 (공용 Field 의 오류 문장과 같은 모양) */
+.error { margin-top: 6px; font-size: 13px; color: var(--bad); }
+
+/* 저장 상태 안내 (아래 버튼 줄 왼쪽) */
+.status { font-size: 13px; color: var(--subtle); }
+
+/* 검토 중·확정 프로젝트를 열었을 때 양식 대신 보이는 안내 카드 */
+.lockedActions { display: flex; flex-wrap: wrap; gap: 8px; }
 
 /* 작성 가이드 */
 .guideTitle { font-size: 16px; font-weight: 700; }

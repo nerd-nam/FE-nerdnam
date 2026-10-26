@@ -2,7 +2,7 @@ import { NEW_PROJECT_ID, routes } from "@/shared/routes";
 import { Badge } from "@/shared/ui/Badge";
 import { Icon } from "@/shared/ui/Icon";
 import { TabLink, TabNav } from "@/shared/ui/Tabs";
-import type { Project, ProjectStatus } from "./mock";
+import type { ProjectStatus } from "./project";
 import styles from "./Project.module.css";
 
 // 탭 옆 상태 배지. 디자인에는 "작성 중"(초안)과 "확정"만 있고, "검토 중"은 기획서 4.3 상태를 따라 추가했다.
@@ -13,7 +13,7 @@ const STATUS_BADGE = {
 } as const satisfies Record<ProjectStatus, { tone: "warn" | "info" | "ok"; label: string }>;
 
 type ProjectTabsProps = {
-  projects: Pick<Project, "id" | "title" | "status">[];
+  projects: { id: string; title: string; status: ProjectStatus }[]; // 서버의 내 프로젝트 목록 (GET /api/projects)
   currentId: string;
 };
 
@@ -26,7 +26,7 @@ export function ProjectTabs({ projects, currentId }: ProjectTabsProps) {
         const badge = STATUS_BADGE[project.status];
         return (
           <TabLink key={project.id} href={routes.project(project.id)} current={project.id === currentId}>
-            {project.title}
+            {project.title || "제목 없는 프로젝트"}
             <Badge tone={badge.tone}>{badge.label}</Badge>
           </TabLink>
         );

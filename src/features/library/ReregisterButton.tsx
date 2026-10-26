@@ -30,6 +30,7 @@ export function ReregisterButton({ projectId, title }: { projectId: string; titl
     setPending(false);
     if (error) return setError(problemMessage(error, "수정을 시작하지 못했어요. 잠시 뒤 다시 시도해 주세요."));
     router.push(routes.project(projectId));
+    router.refresh(); // S04 안내 카드에서 눌렀으면 같은 주소라, 서버에서 다시 그려야 초안 양식이 나온다
   }
 
   return (

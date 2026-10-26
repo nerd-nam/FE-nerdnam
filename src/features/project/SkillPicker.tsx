@@ -1,42 +1,53 @@
 "use client";
 
 // "이 프로젝트에서 쓴 기술": 기술스택에서 고르고, 없는 기술은 바로 추가한다 (기획서 F1)
-// 칩을 누를 때마다 선택이 바뀌어야 해서 클라이언트 컴포넌트다.
+// 고른 기술은 ProjectEditor 가 들고 있다(번호 목록). 새 기술 추가는 누르는 즉시 서버에 보낸다:
+// 내 기술스택에 "학습 중"으로 만들고(POST /api/me/skills, 카테고리 필요), 서버가 표준 이름으로 바꿔 준 결과를 칩으로 붙여 고른다.
+// 프로젝트와의 연결은 프로젝트를 저장할 때(userSkillIds) 같이 간다 — 새 프로젝트도 저장 전에 기술을 추가할 수 있게 (C-02 S04 확인할 것 5)
 import Link from "next/link";
 import { useState } from "react";
+import { CATEGORIES, type Category } from "@/features/skills/skill";
+import { api } from "@/shared/api/client";
+import { problemMessage } from "@/shared/api/problem";
 import { routes } from "@/shared/routes";
 import { Button } from "@/shared/ui/Button";
 import { Chip } from "@/shared/ui/Chip";
-import { Input } from "@/shared/ui/Field";
+import { Input, Select } from "@/shared/ui/Field";
 import { Icon } from "@/shared/ui/Icon";
 import styles from "./Project.module.css";
 
+export type SkillOption = { id: number; name: string };
+
 type SkillPickerProps = {
-  initialOptions: string[]; // 고를 수 있는 기술 = 내 기술스택
-  initialSelected: string[]; // 이 프로젝트에서 쓴 기술
+  options: SkillOption[]; // 고를 수 있는 기술 = 내 기술스택
+  selected: number[];
+  onToggle: (id: number) => void;
+  onAdded: (skill: SkillOption) => void; // 새로 만든(또는 이미 있던) 기술: 칩 목록에 붙이고 고른다
 };
 
-export function SkillPicker({ initialOptions, initialSelected }: SkillPickerProps) {
-  const [options, setOptions] = useState(initialOptions); // 칩 목록 (새로 추가한 기술이 뒤에 붙는다)
-  const [selected, setSelected] = useState(initialSelected); // 고른 기술
-  const [draft, setDraft] = useState(""); // "기술스택에 없는 기술" 칸에 입력 중인 글자
+export function SkillPicker({ options, selected, onToggle, onAdded }: SkillPickerProps) {
+  const [name, setName] = useState(""); // "기술스택에 없는 기술" 칸
+  const [category, setCategory] = useState<Category>("framework");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // 칩 누르기: 골라져 있으면 빼고, 아니면 넣는다
-  function toggle(name: string) {
-    setSelected((prev) => (prev.includes(name) ? prev.filter((item) => item !== name) : [...prev, name]));
-  }
-
-  // 새 기술 추가: 이미 칩에 있는 이름이면(대소문자 무시) 그 칩을 고르고, 없으면 칩을 새로 만들어 고른다.
-  // 표준 이름으로 바꾸는 일(react.js → React)은 저장할 때 서버가 한다 (기획서 F1, C-02 S04 확인할 것 5번)
-  function addDraft() {
-    const name = draft.trim();
-    if (!name) return;
-
-    const existing = options.find((item) => item.toLowerCase() === name.toLowerCase());
-    const skill = existing ?? name;
-    if (!existing) setOptions((prev) => [...prev, skill]);
-    setSelected((prev) => (prev.includes(skill) ? prev : [...prev, skill]));
-    setDraft("");
+  async function add() {
+    const trimmed = name.trim();
+    if (!trimmed || pending) return;
+    // 이미 칩에 있는 이름이면(대소문자 무시) 서버에 묻지 않고 그 칩을 고른다
+    const existing = options.find((s) => s.name.toLowerCase() === trimmed.toLowerCase());
+    if (existing) {
+      if (!selected.includes(existing.id)) onToggle(existing.id);
+      setName("");
+      return;
+    }
+    setPending(true);
+    setError(null);
+    const { data, error } = await api.POST("/api/me/skills", { body: { name: trimmed, category, level: 1 } });
+    setPending(false);
+    if (!data) return setError(problemMessage(error, "기술을 추가하지 못했어요. 잠시 뒤 다시 시도해 주세요."));
+    onAdded({ id: data.id, name: data.name }); // 서버가 바꾼 표준 이름(react.js → React)
+    setName("");
   }
 
   return (
@@ -46,21 +57,16 @@ export function SkillPicker({ initialOptions, initialSelected }: SkillPickerProp
       </legend>
 
       <div className={styles.row}>
-        {options.map((name) => {
-          const isOn = selected.includes(name);
+        {options.map((s) => {
+          const isOn = selected.includes(s.id);
           return (
-            <Chip key={name} variant="accent" pressed={isOn} onClick={() => toggle(name)}>
+            <Chip key={s.id} variant="accent" pressed={isOn} onClick={() => onToggle(s.id)}>
               {isOn && <Icon name="check" size="sm" bold />}
-              {name}
+              {s.name}
             </Chip>
           );
         })}
       </div>
-
-      {/* 저장할 때 양식(form)과 함께 보내려고, 고른 기술을 화면에 안 보이는 칸에 담아 둔다 */}
-      {selected.map((name) => (
-        <input key={name} type="hidden" name="skills" value={name} />
-      ))}
 
       <div className={styles.row}>
         <label htmlFor="new-skill" className="sr-only">
@@ -70,18 +76,36 @@ export function SkillPicker({ initialOptions, initialSelected }: SkillPickerProp
           id="new-skill"
           placeholder="기술스택에 없는 기술 (예: Spring Cloud Gateway)"
           className={styles.newSkillInput}
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
+          value={name}
+          onChange={(event) => setName(event.target.value)}
           onKeyDown={(event) => {
             // Enter 로도 추가. 기본 동작(양식 제출)은 막는다
             if (event.key === "Enter") {
               event.preventDefault();
-              addDraft();
+              add();
             }
           }}
         />
-        <Button onClick={addDraft}>추가</Button>
+        {/* 새 기술은 기술스택에도 들어가서 카테고리가 필요하다 (계약: name + category) */}
+        <label htmlFor="new-skill-category" className="sr-only">
+          새 기술의 카테고리
+        </label>
+        <Select id="new-skill-category" className={styles.newSkillCategory} value={category} onChange={(e) => setCategory(e.target.value as Category)}>
+          {CATEGORIES.map((c) => (
+            <option key={c.value} value={c.value}>
+              {c.label}
+            </option>
+          ))}
+        </Select>
+        <Button disabled={pending} onClick={add}>
+          {pending ? "추가하는 중…" : "추가"}
+        </Button>
       </div>
+      {error && (
+        <p className={styles.error} role="alert">
+          {error}
+        </p>
+      )}
 
       <p className={styles.meta}>
         여기서 새로 추가한 기술은 기술스택에도 “학습 중”으로 함께 저장돼요. 숙련도는 <Link href={routes.skills}>기술스택 화면</Link>에서

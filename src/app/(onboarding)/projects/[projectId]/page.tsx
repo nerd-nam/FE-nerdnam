@@ -1,23 +1,22 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { EMPTY_PROJECT, MOCK_AFFILIATIONS, MOCK_MY_SKILLS, MOCK_PROJECTS } from "@/features/project/mock";
-import { ProjectForm } from "@/features/project/ProjectForm";
+import { EMPTY_DRAFT, toDraft, type AffiliationValue } from "@/features/project/project";
+import { ProjectEditor } from "@/features/project/ProjectEditor";
+import { ProjectLocked } from "@/features/project/ProjectLocked";
 import { ProjectTabs } from "@/features/project/ProjectTabs";
 import { WritingGuide } from "@/features/project/WritingGuide";
-import styles from "@/features/project/Project.module.css";
+import { data, serverApi } from "@/shared/api/server";
 import { Page, PageHead } from "@/shared/layout/Page";
 import { NEW_PROJECT_ID, routes } from "@/shared/routes";
 import { onboardingSteps } from "@/shared/steps";
-import { Button, ButtonLink } from "@/shared/ui/Button";
-import { Icon } from "@/shared/ui/Icon";
 import { Stepper } from "@/shared/ui/Stepper";
 
 export const metadata: Metadata = { title: "프로젝트 입력" };
 
-// S04 프로젝트 입력 · 작업: FE-07 (지금: ① 모양 · ② 나누기 · ③ 움직임 완료, ④ 저장 전)
-// 주소: /projects/new (새 프로젝트) 또는 /projects/p_102 (저장된 프로젝트)
-// 데이터는 아직 임시 데이터(features/project/mock.ts)를 쓴다.
+// S04 프로젝트 입력 · 작업: FE-07 (① 모양 · ② 나누기 · ③ 움직임 · ④ 서버 연결)
+// 주소: /projects/new (새 프로젝트) 또는 /projects/102 (저장된 프로젝트)
+// 화면을 열 때 필요한 것(내 프로젝트 목록 = 위 탭, 이 프로젝트, 소속 선택지 = 내 경력, 사용 기술 선택지 = 내 기술스택)은 서버에서 가져온다.
+// 저장·재구성·삭제는 브라우저에서 보낸다 (ProjectEditor). 검토 중·확정 프로젝트는 양식 대신 안내 카드 (ProjectLocked).
 export default function ProjectPage({ params }: PageProps<"/projects/[projectId]">) {
   return (
     <Page>
@@ -26,7 +25,7 @@ export default function ProjectPage({ params }: PageProps<"/projects/[projectId]
         title="프로젝트를 편하게 적어 주세요"
         desc="형식은 신경 쓰지 않아도 돼요. AI가 [문제]-[해결]-[결과]로 정리하고, 확정은 직접 확인한 뒤에 해요."
       />
-      {/* 주소의 프로젝트 번호가 필요한 부분만 Suspense 로 감싼다 (Next.js 16 cacheComponents 규칙) */}
+      {/* 주소의 프로젝트 번호와 로그인 쿠키가 필요한 부분만 Suspense 로 감싼다 (Next.js 16 cacheComponents 규칙) */}
       <Suspense>
         {params.then(({ projectId }) => (
           <ProjectContent projectId={projectId} />
@@ -36,40 +35,46 @@ export default function ProjectPage({ params }: PageProps<"/projects/[projectId]
   );
 }
 
-function ProjectContent({ projectId }: { projectId: string }) {
-  const isNew = projectId === NEW_PROJECT_ID;
-  const project = isNew ? EMPTY_PROJECT : MOCK_PROJECTS.find((item) => item.id === projectId);
+// 회사 밖 프로젝트 선택지 (C-02 S04 확인할 것 3: affiliation personal·team)
+const OUTSIDE: { value: AffiliationValue; label: string }[] = [
+  { value: "personal", label: "개인 프로젝트" },
+  { value: "team", label: "팀 프로젝트 (회사 외)" },
+];
 
-  // 없는 번호면 404
-  if (!project) notFound();
+async function ProjectContent({ projectId }: { projectId: string }) {
+  const isNew = projectId === NEW_PROJECT_ID;
+  const api = await serverApi(routes.project(projectId));
+  // 서로 기다릴 필요가 없어서 동시에 보낸다. 새 프로젝트는 상세 조회가 없다
+  const [list, careers, skills, detail] = await Promise.all([
+    api.GET("/api/projects"),
+    api.GET("/api/me/careers"),
+    api.GET("/api/me/skills"),
+    isNew ? null : api.GET("/api/projects/{projectId}", { params: { path: { projectId: Number(projectId) || -1 } } }),
+  ]);
+  const project = detail ? data(detail) : null; // 없는 번호·남의 프로젝트면 404 화면
+
+  const tabs = data(list).map((p) => ({ id: String(p.id), title: p.title, status: p.status }));
+  const affiliations = [
+    ...data(careers).map((c) => ({ value: `career:${c.id}` as const, label: [c.companyName, c.teamName].filter(Boolean).join(" · ") })),
+    ...OUTSIDE,
+  ];
 
   return (
     <>
-      <ProjectTabs projects={MOCK_PROJECTS} currentId={projectId} />
-
-      <div className={styles.split}>
-        {/* key: 프로젝트가 바뀌면 양식을 새로 만들라는 표시.
-            지금 설정(next.config.ts 의 cacheComponents)에서는 Next.js 가 주소마다 화면을 따로 보관해서 key 없이도 섞이지 않는다.
-            하지만 이 설정을 끄면 React 가 같은 양식을 다시 써서 이전 프로젝트에서 고른 기술·입력한 글이 남으므로, 안전장치로 둔다 */}
-        <ProjectForm key={project.id} project={project} affiliations={MOCK_AFFILIATIONS} mySkills={MOCK_MY_SKILLS} />
-        <WritingGuide />
-      </div>
-
-      <div className={styles.actions}>
-        <ButtonLink href={routes.career}>이전</ButtonLink>
-        {isNew ? (
-          // 새 프로젝트는 아직 저장 전이라 번호가 없어 검토 화면으로 갈 수 없다. 저장 흐름은 ③·④ 단계에서 정한다
-          <Button variant="primary" disabled>
-            <Icon name="restructure" />
-            [문제]-[해결]-[결과]로 재구성하기
-          </Button>
-        ) : (
-          <ButtonLink variant="primary" href={routes.review(project.id)}>
-            <Icon name="restructure" />
-            [문제]-[해결]-[결과]로 재구성하기
-          </ButtonLink>
-        )}
-      </div>
+      <ProjectTabs projects={tabs} currentId={projectId} />
+      {project && project.status !== "draft" ? (
+        <ProjectLocked projectId={project.id} title={project.title} status={project.status} />
+      ) : (
+        <ProjectEditor
+          // key: 프로젝트가 바뀌면 양식을 새로 만든다 (이전 프로젝트에서 고른 기술·입력한 글이 남지 않게)
+          key={projectId}
+          initial={project ? toDraft(project) : EMPTY_DRAFT}
+          runningJobId={project?.runningJobId ?? null}
+          affiliations={affiliations}
+          mySkills={data(skills).map((s) => ({ id: s.id, name: s.name }))}
+          guide={<WritingGuide />}
+        />
+      )}
     </>
   );
 }
