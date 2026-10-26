@@ -28,6 +28,14 @@
 .alignEnd { left: auto; right: 0; }
 .yearRow { display: flex; align-items: center; justify-content: space-between; }
 .year { font-size: 15px; font-weight: 700; }
+/* 연도 글자 = 연도 고르기 버튼. 아래 화살표로 눌러 볼 수 있음을 알린다 */
+.yearToggle {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 10px;
+  border: 0; border-radius: var(--radius-sm); background: transparent;
+  font: inherit; font-size: 15px; font-weight: 700; color: var(--ink); cursor: pointer;
+}
+.yearToggle:hover { background: var(--surface-muted); }
+.caret { display: grid; place-items: center; color: var(--muted); transform: rotate(90deg); } /* 오른쪽 화살표를 아래로 돌림 */
 .yearBtn {
   width: 36px; height: 36px; border: 0; border-radius: var(--radius-sm); background: transparent;
   display: grid; place-items: center; color: var(--muted); cursor: pointer;
