@@ -65,9 +65,13 @@ export function Header(props: HeaderProps) {
 
 // 계정 메뉴: 내 정보(GET /api/me)는 서버에서 가져오고, 여닫기·로그아웃·탈퇴는 AccountMenu(브라우저)가 한다
 async function Avatar() {
-  const api = await serverApi(routes.library); // 내 정보 조회는 약관 동의 전에도 되므로 돌아올 주소는 쓰이지 않는다
-  const me = data(await api.GET("/api/me"));
-  return <AccountMenu name={me.displayName} email={me.email} />;
+  // 머리글은 지금 화면 주소를 모른다. 로그인이 풀렸으면(401) 여기서 S01 로 보내지 않고 빈 동그라미만 두고,
+  // 화면 쪽 요청이 "다시 로그인하면 이 화면으로" 주소를 붙여 S01 로 보낸다. 내 정보 조회는 약관 동의 전에도 된다
+  const api = await serverApi(routes.library, { anonymous: true });
+  const me = await api.GET("/api/me");
+  if (me.response.status === 401) return <span className={styles.avatar} aria-hidden="true" />;
+  const { displayName, email } = data(me);
+  return <AccountMenu name={displayName} email={email} />;
 }
 
 function Brand() {

@@ -1,6 +1,8 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { FinishLogin } from "@/features/start/FinishLogin";
+import { RETURN_COOKIE } from "@/features/start/loginReturn";
 import { nextStepPath } from "@/features/start/onboarding";
 import { StartCard } from "@/features/start/StartCard";
 import styles from "@/features/start/Start.module.css";
@@ -8,7 +10,7 @@ import { data, serverApi } from "@/shared/api/server";
 import { Footer } from "@/shared/layout/Footer";
 import { Header } from "@/shared/layout/Header";
 import { Page } from "@/shared/layout/Page";
-import { routes } from "@/shared/routes";
+import { isSafePath, routes } from "@/shared/routes";
 import { Icon } from "@/shared/ui/Icon";
 
 // S01 시작하기 (주소: /) · 작업: FE-04 (① 모양 · ② 나누기 · ③ 움직임 · ④ 로그인 연결)
@@ -17,7 +19,7 @@ import { Icon } from "@/shared/ui/Icon";
 //
 // 로그인 흐름 (C-02 S01): 소셜 로그인이 끝나면 BE 가 여기(/)로 돌려보낸다. 그래서 열릴 때 서버에서 로그인 상태를 본다(StartGate).
 // - 로그인 안 함 → 시작하기 카드 (실패해서 돌아왔으면 /?login=failed → 오류 안내)
-// - 로그인 + 동의 기록 있음 → 갈 화면으로 (GET /api/me/onboarding, onboarding.ts)
+// - 로그인 + 동의 기록 있음 → 갈 화면으로: 로그인이 풀려서 왔던 화면(loginReturn.ts)이 있으면 거기, 없으면 하던 단계 (GET /api/me/onboarding, onboarding.ts)
 // - 로그인 + 동의 기록 없음 → 로그인 마무리(FinishLogin): S01 에서 받은 동의를 기록하거나 약관 동의 화면으로
 
 // 서비스 흐름 3단계 (디자인 index.html)
@@ -67,7 +69,7 @@ export default function StartPage({ searchParams }: PageProps<"/">) {
           {/* 로그인 상태를 묻는 동안은 시작하기 카드를 먼저 보여 준다 */}
           <Suspense fallback={<StartCard />}>
             {searchParams.then((sp) => (
-              <StartGate loginFailed={sp.login === "failed"} />
+              <StartGate loginFailed={sp.login === "failed"} next={typeof sp.next === "string" && isSafePath(sp.next) ? sp.next : undefined} />
             ))}
           </Suspense>
         </div>
@@ -77,10 +79,16 @@ export default function StartPage({ searchParams }: PageProps<"/">) {
   );
 }
 
-async function StartGate({ loginFailed }: { loginFailed: boolean }) {
+// next: 로그인이 풀려서 왔을 때(/?next=…) 돌아갈 화면 (우리 사이트 안 주소만)
+async function StartGate({ loginFailed, next }: { loginFailed: boolean; next?: string }) {
   const api = await serverApi(routes.start, { anonymous: true });
   const me = await api.GET("/api/me");
-  if (me.response.status === 401) return <StartCard loginFailed={loginFailed} />;
+  if (me.response.status === 401) return <StartCard loginFailed={loginFailed} next={next} />;
   if (data(me).consentRequired) return <FinishLogin />;
+  // 갈 곳: ① 소셜 로그인을 다녀오기 전에 적어 둔 화면(쿠키, 지우는 일은 /after-login 이 함) ② 주소의 next ③ 하던 단계
+  if ((await cookies()).has(RETURN_COOKIE)) redirect(AFTER_LOGIN);
+  if (next) redirect(next);
   redirect(nextStepPath(data(await api.GET("/api/me/onboarding"))));
 }
+
+const AFTER_LOGIN = "/after-login"; // app/after-login/route.ts

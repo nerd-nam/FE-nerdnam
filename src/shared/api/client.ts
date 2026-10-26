@@ -40,9 +40,9 @@ api.use({
     return request;
   },
   async onResponse({ response }) {
-    // 로그인이 풀림 → S01
+    // 로그인이 풀림 → S01. 다시 로그인하면 지금 화면으로 돌아온다
     if (response.status === 401) {
-      window.location.assign(routes.start);
+      window.location.assign(routes.signIn(window.location.pathname + window.location.search));
       return;
     }
     // 약관 동의가 필요함 → S01-2, 동의한 뒤 지금 화면으로 돌아온다

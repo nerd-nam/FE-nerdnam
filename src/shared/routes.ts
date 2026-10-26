@@ -2,6 +2,8 @@
 // 화면 ID(S01 …)는 기획서 6장 기준.
 export const routes = {
   start: "/", // S01
+  // 로그인이 풀려서 S01 로 갈 때. next: 다시 로그인한 뒤 돌아갈 화면 (FE 결정 2026-10-26, C-02 S01 확인할 것 11)
+  signIn: (next: string) => `/?next=${encodeURIComponent(next)}`,
   // 소셜 로그인 시작 (BE 주소, Next.js 가 대신 전달). 끝나면 BE 가 S01 로 돌려보낸다(실패면 /?login=failed)
   login: (provider: "google" | "kakao") => `/oauth2/authorization/${provider}`,
   // S01-2 약관 동의. next: 동의한 뒤 돌아갈 화면 (403 CONSENT_REQUIRED 를 받은 화면)
@@ -47,5 +49,10 @@ export function isGuideTab(value: string): value is GuideTab {
 // "/consent?next=https://다른사이트" 같은 링크로 사용자를 밖으로 보내는 것을 막는다.
 // "/" 로 시작하되 "//"(다른 사이트를 뜻함)나 "/\" 는 안 된다.
 export function safeNext(next: string | undefined) {
-  return next && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : routes.library;
+  return isSafePath(next) ? next : routes.library;
+}
+
+// 우리 사이트 안 주소인지 (위 safeNext 의 검사만. 아니면 대신 갈 곳은 부르는 쪽이 정한다)
+export function isSafePath(next: string | undefined): next is string {
+  return !!next && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\");
 }

@@ -28,8 +28,8 @@ export async function serverApi(currentPath: string, { anonymous = false } = {})
 
   api.use({
     async onResponse({ response }) {
-      // 로그인이 안 됐거나 풀림 → S01
-      if (response.status === 401 && !anonymous) redirect(routes.start);
+      // 로그인이 안 됐거나 풀림 → S01. 다시 로그인하면 이 화면으로 돌아온다
+      if (response.status === 401 && !anonymous) redirect(routes.signIn(currentPath));
       // 약관 동의가 필요함 → S01-2, 동의한 뒤 이 화면으로 돌아온다
       if (response.status === 403) {
         const body: unknown = await response.clone().json().catch(() => null);
