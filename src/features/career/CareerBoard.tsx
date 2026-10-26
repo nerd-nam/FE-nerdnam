@@ -182,7 +182,9 @@ export function CareerBoard({ initialCareers, mySkills, reviewId }: CareerBoardP
           </Button>
         </section>
 
-        <Card size="lg" className={styles.main} aria-labelledby="form-title">
+        {/* key: 다른 경력을 고르면 양식 안 칸들(재직기간의 "건드렸는지"·열린 달력 등)을 새로 만든다.
+            없으면 앞 경력에서 보던 오류가 새 경력 양식에 그대로 남는다 */}
+        <Card key={String(selectedId)} size="lg" className={styles.main} aria-labelledby="form-title">
           <h2 id="form-title" className={styles.formTitle}>
             {draft.id === null ? "새 경력" : base.company || "(회사명 없음)"}
           </h2>
