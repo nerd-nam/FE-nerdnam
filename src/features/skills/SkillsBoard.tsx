@@ -3,6 +3,8 @@
 // S02 의 움직이는 부분: 기술 추가 카드 + 추가한 기술 표 + 아래 이전/다음 버튼.
 // "추가한 기술" 목록을 두 카드가 함께 쓰므로(검색 결과 칩의 "추가됨" 표시, 표) 상태를 여기 한곳에 둔다.
 // 카테고리는 보여 주거나 고르게 하지 않는다 (FE 결정 2026-10-27). 저장할 때 검색 결과에 붙어 온 카테고리를 보내기만 한다.
+// 표준 사전에 없는 기술도 검색어 그대로 추가할 수 있다 (FE 결정 2026-10-27). 서버가 표준 이름으로 바꾸거나 새 기술로 등록하고,
+// 그 카테고리는 NEW_SKILL_CATEGORY 로 보낸다. 검색 결과의 "추가됨" 칩을 다시 누르면 목록에서 뺀다.
 //
 // 저장 (FE 결정 2026-10-26): 추가·숙련도·삭제는 화면에서만 바꿔 두고, 화면을 떠날 때(이전·다음·검토로 돌아가기·
 // 머리글 "저장하고 나중에 하기") 서버에 한 번에 보낸다. 마지막으로 저장한 상태(saved)와 지금 목록을 비교해
@@ -26,7 +28,7 @@ import { Icon } from "@/shared/ui/Icon";
 import { Table } from "@/shared/ui/Table";
 import { useFocusAfterRender } from "@/shared/useFocusAfterRender";
 import { OnboardingActions } from "@/features/onboarding/OnboardingActions";
-import { LEVELS, type CatalogSkill, type Category, type MySkill } from "./skill";
+import { LEVELS, NEW_SKILL_CATEGORY, type CatalogSkill, type Category, type MySkill } from "./skill";
 import styles from "./Skills.module.css";
 
 // 서버에 마지막으로 저장된 내 기술 (기술 이름 → 서버 번호·카테고리·숙련도)
@@ -56,6 +58,8 @@ export function SkillsBoard({ initialSkills, reviewId }: SkillsBoardProps) {
   const [search, setSearch] = useState<{ q: string; results: CatalogSkill[] | "error" } | null>(null);
 
   const has = (name: string) => skills.some((s) => s.name === name);
+  // 직접 입력한 이름은 대소문자만 다른 같은 기술일 수 있어서 대소문자를 무시하고 찾는다
+  const findByName = (name: string) => skills.find((s) => s.name.toLowerCase() === name.toLowerCase());
 
   // 마지막 저장과 비교한 변경
   const removed = Object.values(saved).filter((s) => !has(s.name));
@@ -94,6 +98,11 @@ export function SkillsBoard({ initialSkills, reviewId }: SkillsBoardProps) {
     setSkills((prev) => [...prev, saved[name] ?? { name, category: cat, level: 1 }]);
   }
 
+  // 검색 결과의 "추가됨" 칩으로 뺄 때. 같은 자리의 칩이 "추가" 칩으로 바뀌어 커서는 그대로 남는다
+  function unpick(name: string) {
+    setSkills((prev) => prev.filter((s) => s.name !== name));
+  }
+
   function remove(name: string) {
     // 지운 뒤 다음 줄(마지막이었으면 윗줄)의 삭제 버튼으로, 다 지웠으면 검색칸으로 커서를 옮긴다 (FE-16)
     const index = skills.findIndex((s) => s.name === name);
@@ -124,10 +133,14 @@ export function SkillsBoard({ initialSkills, reviewId }: SkillsBoardProps) {
         });
       } else fail(error);
     }
+    // 직접 입력한 이름은 서버가 표준 이름으로 바꿔 돌려줄 수 있다(리액트 → React). 화면 이름 → 서버 이름
+    const renamed: Record<string, string> = {};
     for (const s of added) {
       const { data, error } = await api.POST("/api/me/skills", { body: { name: s.name, category: s.category, level: s.level } });
-      if (data) next[s.name] = { id: data.id, name: data.name, category: data.category, level: data.level };
-      else fail(error);
+      if (data) {
+        renamed[s.name] = data.name;
+        next[data.name] = { id: data.id, name: data.name, category: data.category, level: data.level };
+      } else fail(error);
     }
     for (const s of changed) {
       const { data, error } = await api.PATCH("/api/me/skills/{userSkillId}", {
@@ -139,11 +152,18 @@ export function SkillsBoard({ initialSkills, reviewId }: SkillsBoardProps) {
     }
 
     setSaved(next);
-    // 새로 저장한 기술에 서버 번호를 붙이고, 지우지 못한 기술은 목록 끝에 되돌린다
-    setSkills((prev) => [
-      ...prev.map((s) => (next[s.name] ? { ...s, id: next[s.name].id } : s)),
-      ...refused.filter((b) => !prev.some((s) => s.name === b.name)).map((b) => next[b.name]),
-    ]);
+    // 새로 저장한 기술에 서버 이름·번호를 붙이고, 지우지 못한 기술은 목록 끝에 되돌린다.
+    // 서버 이름으로 바꾸면서 같은 기술이 두 줄이 되면(예: React 와 리액트) 앞의 것만 남긴다
+    setSkills((prev) => {
+      const list = [
+        ...prev.map((s) => {
+          const name = renamed[s.name] ?? s.name;
+          return next[name] ? { ...s, name, id: next[name].id } : s;
+        }),
+        ...refused.filter((b) => !prev.some((s) => s.name === b.name)).map((b) => next[b.name]),
+      ];
+      return list.filter((s, i) => list.findIndex((t) => t.name === s.name) === i);
+    });
     if (refused.length) setBlocked(refused);
     if (failure) setSaveError(failure);
     return !refused.length && !failure;
@@ -155,6 +175,24 @@ export function SkillsBoard({ initialSkills, reviewId }: SkillsBoardProps) {
   const q = query.trim();
   const searching = q !== "" && search?.q !== q;
   const list = searching || !search ? [] : search.results;
+  // 검색어와 이름이 똑같은 결과가 없으면 검색어 그대로 추가하는 칩을 붙인다 (이미 추가했으면 "추가됨")
+  const exact = list !== "error" && list.some((s) => s.name.toLowerCase() === q.toLowerCase());
+  const custom = q && !searching && list !== "error" && !exact ? (findByName(q)?.name ?? q) : null;
+
+  // 검색 결과 칩: 추가했으면 "추가됨"(누르면 뺌), 아니면 "추가"
+  function resultChip(name: string, onAdd: () => void, addLabel = name) {
+    return has(name) ? (
+      <Chip key={name} variant="added" aria-label={`${name} 추가됨, 누르면 빼기`} onClick={() => unpick(name)}>
+        <Icon name="check" size="sm" bold />
+        {name} 추가됨
+      </Chip>
+    ) : (
+      <Chip key={name} variant="add" aria-label={`${addLabel} 추가`} onClick={onAdd}>
+        <Icon name="plus" size="sm" />
+        {addLabel}
+      </Chip>
+    );
+  }
 
   return (
     <>
@@ -187,24 +225,14 @@ export function SkillsBoard({ initialSkills, reviewId }: SkillsBoardProps) {
           </span>
           {!q || searching ? null : list === "error" ? (
             <p className={styles.empty}>기술 목록을 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요.</p>
-          ) : list.length === 0 ? (
-            <p className={styles.empty}>표준 사전에서 찾지 못했어요. 다른 이름으로 검색해 보세요.</p>
           ) : (
-            <div className={styles.row}>
-              {list.map((chip) =>
-                has(chip.name) ? (
-                  <Chip key={chip.name} variant="added" disabled>
-                    <Icon name="check" size="sm" bold />
-                    {chip.name} 추가됨
-                  </Chip>
-                ) : (
-                  <Chip key={chip.name} variant="add" aria-label={`${chip.name} 추가`} onClick={() => add(chip.name, chip.category)}>
-                    <Icon name="plus" size="sm" />
-                    {chip.name}
-                  </Chip>
-                ),
-              )}
-            </div>
+            <>
+              {list.length === 0 && <p className={styles.empty}>표준 사전에서 찾지 못했어요. 입력한 이름 그대로 추가할 수 있어요.</p>}
+              <div className={styles.row}>
+                {list.map((chip) => resultChip(chip.name, () => add(chip.name, chip.category)))}
+                {custom && resultChip(custom, () => add(custom, NEW_SKILL_CATEGORY), `"${custom}" 직접`)}
+              </div>
+            </>
           )}
         </div>
       </Card>
