@@ -6,6 +6,13 @@
 /* 인쇄할 때만 보이는 지금 탭 이름 (보이고 숨기는 것은 globals.css 의 .print-only) */
 .printTitle { font-size: 20px; font-weight: 700; }
 
+/* 탭 이름 옆 상태 표시 (GuideTabs): 만드는 중은 돌고, 완료는 초록, 실패는 빨강 */
+.tabMark { display: inline-grid; place-items: center; }
+.tabMark_generating { color: var(--accent); animation: spin 0.9s linear infinite; }
+.tabMark_completed { color: var(--ok); }
+.tabMark_failed { color: var(--bad); }
+@media (prefers-reduced-motion: reduce) { .tabMark_generating { animation: none; } }
+
 /* 왼쪽 탭 내용 + 오른쪽 근거·방향 바꾸기·평가 */
 .split { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
 .main { flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }

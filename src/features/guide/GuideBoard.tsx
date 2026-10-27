@@ -5,7 +5,8 @@
 // 탭 내용(panel)과 근거 목록(sources)은 움직이지 않아서 서버에서 만들어 받아 그 자리에 놓기만 한다.
 //
 // 만들기·기다리기 (C-02 S09 확인할 것 1·2·4·7, FE 결정 2026-10-26):
-// - 아직 만든 적 없는 탭을 열면 그 탭만 바로 만들기 시작한다(피드백 없이). 다섯 탭을 한꺼번에 만들지 않는다
+// - 아직 만든 적 없는 탭을 열면 바로 만들기 시작한다(피드백 없이). 나머지 탭은 탭 줄(GuideTabs)이 함께 만든다
+//   (FE 결정 2026-10-27: 다섯 탭을 한꺼번에). 이 탭의 상태가 바뀌면 탭 줄에 알린다(announceGuideStatus)
 // - 만드는 중이면 작업 번호(runningJobId)로 2.5초마다 묻고(S04·S08 과 같음), 번호가 없으면 탭을 5초마다 다시 묻는다(S08 과 같음)
 // - 끝나면 화면을 서버에서 다시 그려(router.refresh) 내용을 보여 준다
 // - 실패: 실패 이유별 안내 + "다시 시도"(방향 입력 없이). 방향 바꾸기로 다시 만들다 실패했으면 그때 적은 방향을 그대로 다시 보낸다
@@ -29,6 +30,7 @@ import { cx } from "@/shared/ui/cx";
 import { StateCard, StateText } from "@/shared/ui/StateCard";
 import { useFocusAfterRender } from "@/shared/useFocusAfterRender";
 import { REGEN_HINT, type GuideStatus } from "./guide";
+import { announceGuideStatus } from "./GuideTabs";
 import styles from "./Guide.module.css";
 
 const GUIDE_POLL_MS = 5000;
@@ -90,7 +92,10 @@ export function GuideBoard({ postingId, tab, tabLabel, status, runningJobId, las
 
   // 만들기 시작 (처음 만들기·다시 시도·방향 바꾸기). 실패하면 화면에 띄울 문장을 돌려준다
   async function generate(text: string | null): Promise<string | null> {
-    const { data, error } = await api.POST("/api/job-postings/{postingId}/guides/{tab}", { ...path, body: { feedback: text } });
+    // 보내지도 못하면(네트워크·CSRF 토큰) 아래 기본 문장으로 실패를 보여 준다 — 안 그러면 "만드는 중"에 멈춘다
+    const { data, error } = await api
+      .POST("/api/job-postings/{postingId}/guides/{tab}", { ...path, body: { feedback: text } })
+      .catch(() => ({ data: undefined, error: undefined }));
     if (data) {
       wait(data.jobId);
       return null;
@@ -116,6 +121,11 @@ export function GuideBoard({ postingId, tab, tabLabel, status, runningJobId, las
     // 처음 한 번만 (서버가 상태를 바꿔 주면 page.tsx 의 key 가 바뀌어 새로 만들어진다)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 탭 줄의 이 탭 표시를 맞춘다 (만드는 중·완료·실패)
+  useEffect(() => {
+    announceGuideStatus(tab, state.state === "done" ? "completed" : state.state === "waiting" ? "generating" : "failed");
+  }, [tab, state.state]);
 
   // 실패 상자의 "다시 시도": 방향 입력 없이. 직전에 적은 방향이 있으면 그대로 다시 보낸다
   async function retry() {

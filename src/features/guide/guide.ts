@@ -11,6 +11,12 @@ type MatchView = components["schemas"]["MatchView"];
 // 탭 상태: 아직 만든 적 없음(null) / 만드는 중 / 완료 / 실패
 export type GuideStatus = components["schemas"]["TabStatus"]["status"];
 
+// 작업이 돌고 있으면 만드는 중으로 본다. 서버는 작업 안에서 행을 만들어서, 막 시작한 탭은 status 가 아직 null 일 수 있고
+// 다시 만들기 중이면 지난 결과(completed)가 최신일 수 있다
+export function effectiveStatus(t: { status: GuideStatus; runningJobId: number | null }): GuideStatus {
+  return t.runningJobId !== null ? "generating" : t.status;
+}
+
 // 문단 구성의 한 줄: 제목, 설명, 근거
 export type OutlineItem = { title: string; desc: string; sources: Evidence[] };
 
