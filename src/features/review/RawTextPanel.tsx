@@ -20,7 +20,7 @@ type Mark = { start: number; end: number; episodeIndex: number };
 export function RawTextPanel({ data }: { data: ReviewData }) {
   const marks: Mark[] = data.episodes
     .flatMap((ep, episodeIndex) => currentOf(ep).sourceSpans.map(([start, end]) => ({ start, end, episodeIndex })))
-    .filter((m) => m.end <= data.rawText.length) // 답변 부분의 구간은 아래 답변 목록에서 보여 준다
+    .filter((m) => m.start < data.rawText.length) // 답변 부분의 구간은 아래 답변 목록에서 보여 준다
     .sort((a, b) => a.start - b.start);
 
   const labeled = new Set<number>(); // "[사례 N]" 라벨은 그 사례가 처음 나오는 문단 앞에 한 번만
@@ -36,7 +36,11 @@ export function RawTextPanel({ data }: { data: ReviewData }) {
     const pieces: ReactNode[] = [];
     const labels: ReactNode[] = [];
     let cursor = pStart;
-    for (const mark of marks.filter((m) => m.start >= pStart && m.end <= pEnd)) {
+    // 여러 문단에 걸친 구간은 이 문단 안의 부분만 칠한다. 앞 구간과 겹치는 부분은 앞 구간 색을 남긴다
+    for (const mark of marks) {
+      const start = Math.max(mark.start, pStart, cursor);
+      const end = Math.min(mark.end, pEnd);
+      if (start >= end) continue;
       if (!labeled.has(mark.episodeIndex)) {
         labeled.add(mark.episodeIndex);
         labels.push(
@@ -45,13 +49,13 @@ export function RawTextPanel({ data }: { data: ReviewData }) {
           </span>,
         );
       }
-      if (mark.start > cursor) pieces.push(data.rawText.slice(cursor, mark.start));
+      if (start > cursor) pieces.push(data.rawText.slice(cursor, start));
       pieces.push(
-        <mark key={mark.start} className={`${styles.mark} ${toneClass(mark.episodeIndex)}`}>
-          {data.rawText.slice(mark.start, mark.end)}
+        <mark key={start} className={`${styles.mark} ${toneClass(mark.episodeIndex)}`}>
+          {data.rawText.slice(start, end)}
         </mark>,
       );
-      cursor = mark.end;
+      cursor = end;
     }
     if (cursor < pEnd) pieces.push(data.rawText.slice(cursor, pEnd));
 
