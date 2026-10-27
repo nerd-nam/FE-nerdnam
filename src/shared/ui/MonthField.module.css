@@ -40,14 +40,14 @@
   width: 36px; height: 36px; border: 0; border-radius: var(--radius-sm); background: transparent;
   display: grid; place-items: center; color: var(--muted); cursor: pointer;
 }
-.yearBtn:hover { background: var(--surface-muted); }
-.yearBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+.yearBtn:hover:not([aria-disabled="true"]) { background: var(--surface-muted); }
+.yearBtn[aria-disabled="true"] { opacity: 0.35; cursor: not-allowed; } /* 고를 수 없음 (disabled 대신, MonthField 참고) */
 
 .months { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .month {
   min-height: 40px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: #fff;
   font: inherit; font-size: 14px; color: var(--ink); cursor: pointer;
 }
-.month:hover { background: var(--surface-muted); }
+.month:hover:not([aria-disabled="true"]) { background: var(--surface-muted); }
 .month[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
-.month:disabled { color: #B5BAC4; background: var(--bg); cursor: not-allowed; }
+.month[aria-disabled="true"] { color: #B5BAC4; background: var(--bg); cursor: not-allowed; }

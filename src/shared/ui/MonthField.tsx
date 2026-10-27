@@ -97,8 +97,11 @@ export function MonthField(props: MonthFieldProps) {
       ref={wrapRef}
       className={styles.wrap}
       // 키보드(Tab)로 칸·달력 밖으로 나가면 달력을 닫는다. 안 닫으면 아래 칸들을 가린 채 남는다 (FE-16 점검)
+      // 커서가 간 곳(relatedTarget)이 있을 때만 본다. 없으면(null) 밖으로 나간 게 아닐 수 있다 — Safari 는 커서가 있던 버튼이
+      // 고를 수 없게 바뀌면 커서를 그냥 빼 버린다. 바깥을 누른 경우는 위 pointerdown 이 닫는다
       onBlur={(event) => {
-        if (!wrapRef.current?.contains(event.relatedTarget as Node | null)) setOpen(false);
+        const next = event.relatedTarget as Node | null;
+        if (next && !wrapRef.current?.contains(next)) setOpen(false);
       }}
     >
       <input
@@ -145,7 +148,9 @@ export function MonthField(props: MonthFieldProps) {
           aria-label={`${label} 고르기`}
           className={cx(styles.picker, align === "end" && styles.alignEnd)}
           // 마우스로 누를 때 커서를 옮기지 않는다. Safari·맥 Firefox 는 버튼을 눌러도 커서를 버튼으로 옮기지 않아서,
-          // 누르는 순간 "밖으로 나감"(위 onBlur)으로 보고 달력을 닫아 버려 달을 골라도 값이 안 들어갔다. 클릭(pick)은 그대로 된다
+          // 누르는 순간 "밖으로 나감"(위 onBlur)으로 보고 달력을 닫아 버려 달을 골라도 값이 안 들어갔다. 클릭(pick)은 그대로 된다.
+          // 고를 수 없는 칸·화살표는 disabled 대신 aria-disabled 로 막는다. Safari 는 disabled 버튼을 누르면 이 mousedown 까지
+          // 오지 않아 커서가 빠지며 달력이 닫혔다. 누르면 아무 일도 하지 않는다(아래 onClick 이 확인)
           onMouseDown={(event) => event.preventDefault()}
           onKeyDown={(event) => {
             if (event.key === "Escape") {
@@ -161,8 +166,8 @@ export function MonthField(props: MonthFieldProps) {
                   type="button"
                   className={styles.yearBtn}
                   aria-label="이전 해"
-                  disabled={minYear !== null && year <= minYear}
-                  onClick={() => setYear((y) => y - 1)}
+                  aria-disabled={(minYear !== null && year <= minYear) || undefined}
+                  onClick={() => (minYear === null || year > minYear) && setYear((y) => y - 1)}
                 >
                   <Icon name="chevronLeft" size="sm" />
                 </button>
@@ -177,8 +182,8 @@ export function MonthField(props: MonthFieldProps) {
                   type="button"
                   className={styles.yearBtn}
                   aria-label="다음 해"
-                  disabled={year >= maxYear}
-                  onClick={() => setYear((y) => y + 1)}
+                  aria-disabled={year >= maxYear || undefined}
+                  onClick={() => year < maxYear && setYear((y) => y + 1)}
                 >
                   <Icon name="chevronRight" size="sm" />
                 </button>
@@ -190,9 +195,9 @@ export function MonthField(props: MonthFieldProps) {
                     type="button"
                     className={styles.month}
                     aria-pressed={value === monthKey(month)}
-                    disabled={monthDisabled(month)} // 미래 월, 범위(min·max) 밖은 고를 수 없다
+                    aria-disabled={monthDisabled(month) || undefined} // 미래 월, 범위(min·max) 밖은 고를 수 없다
                     autoFocus={month === focusMonth}
-                    onClick={() => pick(month)}
+                    onClick={() => !monthDisabled(month) && pick(month)}
                   >
                     {month}월
                   </button>
@@ -206,8 +211,8 @@ export function MonthField(props: MonthFieldProps) {
                   type="button"
                   className={styles.yearBtn}
                   aria-label="이전 12년"
-                  disabled={minYear !== null && years[0] <= minYear}
-                  onClick={() => setYearPageEnd((end) => end! - YEARS_PER_PAGE)}
+                  aria-disabled={(minYear !== null && years[0] <= minYear) || undefined}
+                  onClick={() => (minYear === null || years[0] > minYear) && setYearPageEnd((end) => end! - YEARS_PER_PAGE)}
                 >
                   <Icon name="chevronLeft" size="sm" />
                 </button>
@@ -218,8 +223,8 @@ export function MonthField(props: MonthFieldProps) {
                   type="button"
                   className={styles.yearBtn}
                   aria-label="다음 12년"
-                  disabled={yearPageEnd >= maxYear}
-                  onClick={() => setYearPageEnd((end) => end! + YEARS_PER_PAGE)}
+                  aria-disabled={yearPageEnd >= maxYear || undefined}
+                  onClick={() => yearPageEnd < maxYear && setYearPageEnd((end) => end! + YEARS_PER_PAGE)}
                 >
                   <Icon name="chevronRight" size="sm" />
                 </button>
@@ -231,9 +236,9 @@ export function MonthField(props: MonthFieldProps) {
                     type="button"
                     className={styles.month}
                     aria-pressed={y === year}
-                    disabled={yearDisabled(y)}
+                    aria-disabled={yearDisabled(y) || undefined}
                     autoFocus={y === focusYear}
-                    onClick={() => pickYear(y)}
+                    onClick={() => !yearDisabled(y) && pickYear(y)}
                   >
                     {y}
                   </button>

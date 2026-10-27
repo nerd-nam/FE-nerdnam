@@ -1,6 +1,6 @@
 "use client";
 
-// S03 의 움직이는 부분: 왼쪽 경력 목록 + 오른쪽 양식 + 아래 이전/다음 버튼.
+// S03 의 움직이는 부분: 제목(경력이 없을 때만 "건너뛰기") + 왼쪽 경력 목록 + 오른쪽 양식 + 아래 이전/다음 버튼.
 // 목록은 페이지가 서버에서 가져와 넘겨준다(GET /api/me/careers). 양식은 "저장"을 눌러야 서버에 보낸다(POST·PUT).
 //
 // 저장하지 않은 변경 (FE 결정 2026-10-26, C-02 S03 확인할 것 1):
@@ -8,11 +8,12 @@
 // 확인창에서 "저장하고 이동 / 버리고 이동 / 취소"를 고른다. 새로고침·탭 닫기는 브라우저가 경고한다.
 // 삭제 거부 (확인할 것 5): 프로젝트가 연결된 경력은 서버가 409 IN_USE 로 거부한다 → 연결된 프로젝트(S04 링크)를 보여 준다.
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type KeyboardEvent } from "react";
 import { OnboardingActions } from "@/features/onboarding/OnboardingActions";
 import { api } from "@/shared/api/client";
 import { isProblem, problemMessage } from "@/shared/api/problem";
-import { useRegisterSave } from "@/shared/layout/PendingSave";
+import { PageHead } from "@/shared/layout/Page";
+import { SaveLaterLink, useRegisterSave } from "@/shared/layout/PendingSave";
 import { NEW_PROJECT_ID, routes } from "@/shared/routes";
 import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
@@ -150,8 +151,37 @@ export function CareerBoard({ initialCareers, mySkills, reviewId }: CareerBoardP
   const toggleSkill = (id: number) => set("skillIds", draft.skillIds.includes(id) ? draft.skillIds.filter((s) => s !== id) : [...draft.skillIds, id]);
   const showError = (message: string | null) => (triedSave ? message : null);
 
+  // 주요 업무에서 Enter: 바로 아래에 빈 줄을 만들고(5줄 미만일 때) 그 줄로 커서를 옮긴다. 아래가 빈 줄이면 그 줄로만
+  function onDutyEnter(event: KeyboardEvent<HTMLInputElement>, index: number) {
+    // 한글 입력 중(조합 중)의 Enter 는 글자를 마치는 것이라 건너뛴다. Safari 는 조합을 마치는 Enter 에 isComposing 이 false 라 keyCode 229 도 본다
+    if (event.key !== "Enter" || event.nativeEvent.isComposing || event.keyCode === 229) return;
+    event.preventDefault();
+    const next = index + 1;
+    if (draft.duties[next] === "") {
+      document.getElementById(`duty-${next}`)?.focus();
+      return;
+    }
+    if (draft.duties.length >= MAX_DUTIES) return;
+    focusAfter(`duty-${next}`);
+    set("duties", [...draft.duties.slice(0, next), "", ...draft.duties.slice(next)]);
+  }
+
   return (
     <>
+      <PageHead
+        title="경력을 입력해 주세요"
+        desc="최근 경력부터 적어 주세요. 공고의 연차 조건은 여기 적은 재직기간으로 계산해요."
+        actions={
+          // 저장한 경력이 하나라도 있으면 건너뛸 이유가 없어 숨긴다. 다 지우면 다시 보인다.
+          // 저장하지 않은 변경이 있으면 확인창을 거친다 (useRegisterSave 로 맡긴 확인)
+          careers.length === 0 && (
+            <SaveLaterLink href={routes.project(NEW_PROJECT_ID)} className={styles.skip}>
+              경력이 없어요 (건너뛰기)
+            </SaveLaterLink>
+          )
+        }
+      />
+
       <div className={styles.split}>
         <section className={styles.side} aria-labelledby="career-list">
           <h2 id="career-list" className={styles.listTitle}>
@@ -260,6 +290,7 @@ export function CareerBoard({ initialCareers, mySkills, reviewId }: CareerBoardP
                   value={duty}
                   placeholder="한 줄에 업무 하나씩 적어 주세요"
                   onChange={(e) => set("duties", draft.duties.map((d, i) => (i === index ? e.target.value : d)))}
+                  onKeyDown={(e) => onDutyEnter(e, index)}
                 />
               </div>
             ))}

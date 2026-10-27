@@ -2,12 +2,10 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { CareerBoard } from "@/features/career/CareerBoard";
 import { toCareer } from "@/features/career/career";
-import styles from "@/features/career/Career.module.css";
 import { LeaveGuard } from "@/features/onboarding/LeaveGuard";
 import { data, serverApi } from "@/shared/api/server";
-import { Page, PageHead } from "@/shared/layout/Page";
-import { SaveLaterLink } from "@/shared/layout/PendingSave";
-import { NEW_PROJECT_ID, routes } from "@/shared/routes";
+import { Page } from "@/shared/layout/Page";
+import { routes } from "@/shared/routes";
 import { onboardingSteps } from "@/shared/steps";
 import { Stepper } from "@/shared/ui/Stepper";
 
@@ -28,16 +26,7 @@ export default function CareerPage({ searchParams }: PageProps<"/career">) {
               {/* 검토 중에 왔으면 S04(원문 화면)로 갈 때만 경고. 단계 표시의 S02 링크에도 ?review 를 이어 붙인다 */}
               {reviewId && <LeaveGuard active mode="enter-original" discardProjectId={Number(reviewId)} />}
               <Stepper label="온보딩 단계" steps={onboardingSteps(reviewId)} current={1} />
-              <PageHead
-                title="경력을 입력해 주세요"
-                desc="최근 경력부터 적어 주세요. 공고의 연차 조건은 여기 적은 재직기간으로 계산해요."
-                actions={
-                  // 저장하지 않은 변경이 있으면 확인창을 거친다 (CareerBoard 가 맡긴 확인)
-                  <SaveLaterLink href={routes.project(NEW_PROJECT_ID)} className={styles.skip}>
-                    경력이 없어요 (건너뛰기)
-                  </SaveLaterLink>
-                }
-              />
+              {/* 제목과 "경력이 없어요 (건너뛰기)"는 CareerBoard 가 그린다 — 경력을 저장하면 건너뛰기를 숨겨야 해서 */}
               <Careers reviewId={reviewId} />
             </>
           );
