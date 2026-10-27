@@ -189,7 +189,7 @@ export function SkillsBoard({ initialSkills, reviewId }: SkillsBoardProps) {
     ) : (
       <Chip key={name} variant="add" aria-label={`${addLabel} 추가`} onClick={onAdd}>
         <Icon name="plus" size="sm" />
-        {addLabel}
+        {addLabel === name ? name : `${addLabel} 추가`}
       </Chip>
     );
   }
