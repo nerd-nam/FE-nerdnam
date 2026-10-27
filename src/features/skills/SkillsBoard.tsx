@@ -1,7 +1,8 @@
 "use client";
 
 // S02 의 움직이는 부분: 기술 추가 카드 + 추가한 기술 표 + 아래 이전/다음 버튼.
-// "추가한 기술" 목록을 두 카드가 함께 쓰므로(추천 칩의 "추가됨" 표시, 표) 상태를 여기 한곳에 둔다.
+// "추가한 기술" 목록을 두 카드가 함께 쓰므로(검색 결과 칩의 "추가됨" 표시, 표) 상태를 여기 한곳에 둔다.
+// 카테고리는 보여 주거나 고르게 하지 않는다 (FE 결정 2026-10-27). 저장할 때 검색 결과에 붙어 온 카테고리를 보내기만 한다.
 //
 // 저장 (FE 결정 2026-10-26): 추가·숙련도·삭제는 화면에서만 바꿔 두고, 화면을 떠날 때(이전·다음·검토로 돌아가기·
 // 머리글 "저장하고 나중에 하기") 서버에 한 번에 보낸다. 마지막으로 저장한 상태(saved)와 지금 목록을 비교해
@@ -25,7 +26,7 @@ import { Icon } from "@/shared/ui/Icon";
 import { Table } from "@/shared/ui/Table";
 import { useFocusAfterRender } from "@/shared/useFocusAfterRender";
 import { OnboardingActions } from "@/features/onboarding/OnboardingActions";
-import { CATEGORIES, categoryLabel, LEVELS, SUGGESTION_COUNT, type CatalogSkill, type Category, type MySkill } from "./skill";
+import { LEVELS, type CatalogSkill, type Category, type MySkill } from "./skill";
 import styles from "./Skills.module.css";
 
 // 서버에 마지막으로 저장된 내 기술 (기술 이름 → 서버 번호·카테고리·숙련도)
@@ -36,8 +37,6 @@ type Blocked = { name: string; usages: { label: string; href: string }[] };
 
 type SkillsBoardProps = {
   initialSkills: MySkill[];
-  firstCategory: Category;
-  firstCatalog: CatalogSkill[]; // 첫 카테고리의 표준 기술 목록 (페이지가 서버에서 가져옴)
   reviewId?: string; // S05 검토 중에 왔으면 그 프로젝트 번호 (아래 버튼이 "검토로 돌아가기"가 됨)
 };
 
@@ -45,16 +44,13 @@ function toSaved(skills: MySkill[]): Saved {
   return Object.fromEntries(skills.filter((s) => s.id !== undefined).map((s) => [s.name, { ...s, id: s.id! }]));
 }
 
-export function SkillsBoard({ initialSkills, firstCategory, firstCatalog, reviewId }: SkillsBoardProps) {
+export function SkillsBoard({ initialSkills, reviewId }: SkillsBoardProps) {
   const [skills, setSkills] = useState(initialSkills);
   const [saved, setSaved] = useState(() => toSaved(initialSkills));
   const [blocked, setBlocked] = useState<Blocked[] | null>(null); // 있으면 "지울 수 없어요" 안내창
   const [saveError, setSaveError] = useState<string | null>(null);
   const focusAfter = useFocusAfterRender();
 
-  const [category, setCategory] = useState(firstCategory);
-  // 카테고리별 표준 기술 목록. 처음 카테고리는 서버에서 받아 왔고, 나머지는 처음 누를 때 브라우저에서 가져온다
-  const [catalogs, setCatalogs] = useState<Partial<Record<Category, CatalogSkill[] | "error">>>({ [firstCategory]: firstCatalog });
   const [query, setQuery] = useState("");
   // 마지막으로 받은 검색 결과. q 가 지금 검색어와 다르면 아직 찾는 중이다
   const [search, setSearch] = useState<{ q: string; results: CatalogSkill[] | "error" } | null>(null);
@@ -91,13 +87,6 @@ export function SkillsBoard({ initialSkills, firstCategory, firstCatalog, review
       clearTimeout(timer);
     };
   }, [query]);
-
-  async function chooseCategory(next: Category) {
-    setCategory(next);
-    if (catalogs[next] && catalogs[next] !== "error") return;
-    const { data } = await api.GET("/api/skills", { params: { query: { category: next } } });
-    setCatalogs((prev) => ({ ...prev, [next]: data ? data.map((s) => ({ name: s.name, category: s.category })) : "error" }));
-  }
 
   // 새 기술은 "학습 중"(1)으로 추가한다 (디자인 skills.js 와 같음). 저장 전에 지웠다가 다시 넣으면 원래 상태로 돌아온다
   function add(name: string, cat: Category) {
@@ -162,12 +151,10 @@ export function SkillsBoard({ initialSkills, firstCategory, firstCatalog, review
 
   useRegisterSave(save); // 머리글 "저장하고 나중에 하기"도 이 저장을 쓴다
 
-  // 검색어가 있으면 검색 결과, 없으면 고른 카테고리의 앞 몇 개를 추천 칩으로
+  // 검색어가 있을 때만 결과 칩을 보여 준다
   const q = query.trim();
   const searching = q !== "" && search?.q !== q;
-  const catalog = catalogs[category];
-  const list = q ? (searching ? [] : search!.results) : catalog === undefined ? [] : catalog === "error" ? "error" : catalog.slice(0, SUGGESTION_COUNT);
-  const loading = q ? searching : catalog === undefined;
+  const list = searching || !search ? [] : search.results;
 
   return (
     <>
@@ -175,14 +162,6 @@ export function SkillsBoard({ initialSkills, firstCategory, firstCatalog, review
         <h2 id="add-title" className={styles.cardTitle}>
           기술 추가
         </h2>
-
-        <div className={styles.row} role="group" aria-label="카테고리">
-          {CATEGORIES.map((c) => (
-            <Chip key={c.value} pressed={c.value === category} onClick={() => chooseCategory(c.value)}>
-              {c.label}
-            </Chip>
-          ))}
-        </div>
 
         <div className={styles.search}>
           <label htmlFor="skill-search" className="sr-only">
@@ -204,11 +183,11 @@ export function SkillsBoard({ initialSkills, firstCategory, firstCatalog, review
               ? searching
                 ? `"${q}" 찾는 중…`
                 : `"${q}" 검색 결과 ${list === "error" ? 0 : list.length}개`
-              : `${categoryLabel(category)}에서 자주 쓰는 기술`}
+              : "기술 이름을 입력하면 표준 사전에서 찾아 줘요"}
           </span>
-          {list === "error" ? (
+          {!q || searching ? null : list === "error" ? (
             <p className={styles.empty}>기술 목록을 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요.</p>
-          ) : loading ? null : list.length === 0 ? (
+          ) : list.length === 0 ? (
             <p className={styles.empty}>표준 사전에서 찾지 못했어요. 다른 이름으로 검색해 보세요.</p>
           ) : (
             <div className={styles.row}>
@@ -249,13 +228,10 @@ export function SkillsBoard({ initialSkills, firstCategory, firstCatalog, review
         <Table variant="plain" className={styles.table}>
           <thead>
             <tr>
-              <th scope="col" style={{ width: "30%" }}>
+              <th scope="col" style={{ width: "40%" }}>
                 기술
               </th>
-              <th scope="col" style={{ width: "20%" }}>
-                카테고리
-              </th>
-              <th scope="col" style={{ width: "42%" }}>
+              <th scope="col" style={{ width: "52%" }}>
                 숙련도
               </th>
               <th scope="col" style={{ width: "8%" }}>
@@ -267,7 +243,6 @@ export function SkillsBoard({ initialSkills, firstCategory, firstCatalog, review
             {skills.map((skill, index) => (
               <tr key={skill.name}>
                 <td className={styles.name}>{skill.name}</td>
-                <td className={styles.muted}>{categoryLabel(skill.category)}</td>
                 <td>
                   <div className={styles.level}>
                     <div className={styles.bars}>

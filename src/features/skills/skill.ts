@@ -1,20 +1,13 @@
-// 기술스택 공통: 카테고리·숙련도 기준과 화면에서 쓰는 모양 (기획서 4.1, C-03 계약)
+// 기술스택 공통: 숙련도 기준과 화면에서 쓰는 모양 (기획서 4.1, C-03 계약)
 import type { components } from "@/shared/api/schema";
 
-// 카테고리 (기획서 4.1). 저장 값은 계약과 같다 (C-02 S02 확인할 것 4)
-export const CATEGORIES = [
-  { value: "language", label: "언어" },
-  { value: "framework", label: "프레임워크" },
-  { value: "database", label: "DB" },
-  { value: "infra", label: "인프라" },
-  { value: "tool", label: "협업 도구" },
-] as const satisfies { value: components["schemas"]["SkillResponse"]["category"]; label: string }[];
+// 카테고리는 화면에 보여 주거나 고르게 하지 않는다 (FE 결정 2026-10-27). 서버에 보낼 때만 쓴다
+export type Category = components["schemas"]["SkillResponse"]["category"];
 
-export type Category = (typeof CATEGORIES)[number]["value"];
-
-export function categoryLabel(value: Category) {
-  return CATEGORIES.find((c) => c.value === value)!.label;
-}
+// 사전에 없는 기술을 추가할 때 대신 보내는 카테고리. 서버는 사전에 없는 기술에 카테고리를 꼭 받는다.
+// 사전에 있는 기술은 서버가 이 값을 쓰지 않고 사전의 카테고리를 쓴다.
+// BE 가 '기타(etc)'를 만들고 카테고리를 비워 보내도 되게 바꾸면 이 값을 없앤다 (nerd-nam/BE-nerdnam#33)
+export const NEW_SKILL_CATEGORY: Category = "tool";
 
 // 숙련도 4단계와 기준 문장 (기획서 4.1)
 export const LEVELS = [
@@ -31,8 +24,5 @@ export function toMySkill(s: components["schemas"]["UserSkillResponse"]): MySkil
   return { id: s.id, name: s.name, category: s.category, level: s.level };
 }
 
-// 표준 사전의 기술 (자동완성·추천 칩)
+// 표준 사전의 기술 (검색 자동완성)
 export type CatalogSkill = { name: string; category: Category };
-
-// 추천 칩은 카테고리 목록의 앞 4개 (C-02 S02 확인할 것 2: 서버는 사전을 거른 목록만 주고, 몇 개 보일지는 웹이 정함)
-export const SUGGESTION_COUNT = 4;

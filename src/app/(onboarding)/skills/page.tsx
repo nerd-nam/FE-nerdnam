@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SkillsBoard } from "@/features/skills/SkillsBoard";
-import { toMySkill, type Category } from "@/features/skills/skill";
+import { toMySkill } from "@/features/skills/skill";
 import { data, serverApi } from "@/shared/api/server";
 import { Page, PageHead } from "@/shared/layout/Page";
 import { routes } from "@/shared/routes";
@@ -10,12 +10,9 @@ import { Stepper } from "@/shared/ui/Stepper";
 
 export const metadata: Metadata = { title: "기술스택 입력" };
 
-// 처음 보여 줄 카테고리 (디자인 skills.html 은 프레임워크가 눌려 있다)
-const FIRST_CATEGORY: Category = "framework";
-
 // S02 기술스택 입력 (주소: /skills, 검토 중에 오면 /skills?review=102) · 작업: FE-05 (① 모양 · ② 나누기 · ③ 움직임 · ④ 서버 연결)
-// 화면을 열 때 필요한 것(내 기술, 첫 카테고리의 추천 칩)은 서버에서 가져온다.
-// 다른 카테고리 칩과 검색 자동완성은 화면을 보는 동안 바뀌어서 브라우저에서 가져온다(SkillsBoard).
+// 화면을 열 때 필요한 것(내 기술)은 서버에서 가져온다. 검색 자동완성은 입력할 때마다 브라우저에서 가져온다(SkillsBoard).
+// 카테고리 탭·추천 칩은 없다 (FE 결정 2026-10-27: 사용자에게 카테고리를 보여 주거나 고르게 하지 않는다).
 // 추가·숙련도·삭제는 화면에서만 바꿔 두고 "다음"(또는 이전·검토로 돌아가기·저장하고 나중에 하기)에서 한 번에 저장한다 (FE 결정 2026-10-26).
 export default function SkillsPage({ searchParams }: PageProps<"/skills">) {
   return (
@@ -37,17 +34,6 @@ export default function SkillsPage({ searchParams }: PageProps<"/skills">) {
 
 async function Skills({ reviewId }: { reviewId?: string }) {
   const api = await serverApi(reviewId ? `${routes.skills}?review=${reviewId}` : routes.skills);
-  // 두 요청은 서로 기다릴 필요가 없어서 동시에 보낸다
-  const [mine, catalog] = await Promise.all([
-    api.GET("/api/me/skills"),
-    api.GET("/api/skills", { params: { query: { category: FIRST_CATEGORY } } }),
-  ]);
-  return (
-    <SkillsBoard
-      initialSkills={data(mine).map(toMySkill)}
-      firstCategory={FIRST_CATEGORY}
-      firstCatalog={data(catalog).map((s) => ({ name: s.name, category: s.category }))}
-      reviewId={reviewId}
-    />
-  );
+  const mine = await api.GET("/api/me/skills");
+  return <SkillsBoard initialSkills={data(mine).map(toMySkill)} reviewId={reviewId} />;
 }
