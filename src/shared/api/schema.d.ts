@@ -610,8 +610,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * 프로젝트·사례 — 사례 버전 복원
-         * @description 세부 상태 규칙은 C-02 화면별 API 목록과 BE docs/02를 따른다. 변경 요청은 세션 쿠키와 CSRF 헤더를 함께 보낸다.
+         * 프로젝트·사례 — 이 버전에서 이어서 하기
+         * @description 이 버전에서 이어서 하기 — 새 버전을 만들지 않고 사례의 currentVersion 만 고른 버전으로 바꾼다. 그 버전의 확인 질문도 함께 되살아난다. 이미 쓰는 버전이면 422, 없는 번호면 404다. 이어서 고치면 그때 가장 큰 번호 + 1 로 새 버전이 생긴다 (currentVersion 이 가장 큰 번호가 아닐 수 있다).
          */
         post: operations["ProjectController_restore"];
         delete?: never;
