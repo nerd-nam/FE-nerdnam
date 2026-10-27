@@ -71,9 +71,18 @@ async function Library() {
 
       <div className={styles.split}>
         <section className={styles.main} aria-labelledby="proj-title">
-          <h2 id="proj-title" className={styles.sectionTitle}>
-            프로젝트
-          </h2>
+          <div className={styles.sectionHead}>
+            <h2 id="proj-title" className={styles.sectionTitle}>
+              프로젝트
+            </h2>
+            {/* 새 프로젝트 → S04. 빈 목록이면 아래 카드의 "프로젝트 입력하기"가 같은 일을 해서 숨긴다 (디자인에 없어 FE 가 정함) */}
+            {projects.length > 0 && (
+              <ButtonLink size="sm" href={routes.project(NEW_PROJECT_ID)}>
+                <Icon name="plus" size="sm" />
+                프로젝트 추가
+              </ButtonLink>
+            )}
+          </div>
           {projects.length === 0 ? (
             // 프로젝트가 하나도 없을 때 (디자인에 없어 FE 가 정함)
             <Card tone="dashed" className={cx(styles.pending, styles.card)}>
