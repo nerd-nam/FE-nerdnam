@@ -3,7 +3,7 @@
 // "이 프로젝트에서 쓴 기술"(S04)·"이 회사에서 쓴 기술"(S03): 기술스택에서 고르고, 없는 기술은 바로 추가한다 (기획서 F1)
 // 고른 기술은 ProjectEditor·CareerBoard 가 들고 있다(번호 목록). 새 기술 추가는 누르는 즉시 서버에 보낸다:
 // 내 기술스택에 "학습 중"으로 만들고(POST /api/me/skills), 서버가 표준 이름으로 바꿔 준 결과를 칩으로 붙여 고른다.
-// 카테고리는 고르게 하지 않는다 (FE 결정 2026-10-27). 서버가 사전에 없는 기술에 카테고리를 꼭 받아서 정해 둔 값을 대신 보낸다.
+// 카테고리는 고르지도 보내지도 않는다 (FE 결정 2026-10-27). 사전에 없는 기술은 서버가 etc(기타)로 등록한다 (C-03 v0.1.6).
 // 프로젝트·경력과의 연결은 그것을 저장할 때(userSkillIds) 같이 간다 — 새 프로젝트·경력도 저장 전에 기술을 추가할 수 있게 (C-02 S04 확인할 것 5)
 import Link from "next/link";
 import { useState } from "react";
@@ -14,7 +14,6 @@ import { Button } from "@/shared/ui/Button";
 import { Chip } from "@/shared/ui/Chip";
 import { Input } from "@/shared/ui/Field";
 import { Icon } from "@/shared/ui/Icon";
-import { NEW_SKILL_CATEGORY } from "./skill";
 import styles from "./SkillPicker.module.css";
 
 export type SkillOption = { id: number; name: string }; // 내 기술스택 (userSkillId, 이름)
@@ -44,7 +43,7 @@ export function SkillPicker({ legend, options, selected, onToggle, onAdded }: Sk
     }
     setPending(true);
     setError(null);
-    const { data, error } = await api.POST("/api/me/skills", { body: { name: trimmed, category: NEW_SKILL_CATEGORY, level: 1 } });
+    const { data, error } = await api.POST("/api/me/skills", { body: { name: trimmed, level: 1 } });
     setPending(false);
     if (!data) return setError(problemMessage(error, "기술을 추가하지 못했어요. 잠시 뒤 다시 시도해 주세요."));
     onAdded({ id: data.id, name: data.name }); // 서버가 바꾼 표준 이름(react.js → React)

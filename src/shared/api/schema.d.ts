@@ -375,7 +375,7 @@ export interface paths {
         put?: never;
         /**
          * 내 기술스택 — 추가
-         * @description 세부 상태 규칙은 C-02 화면별 API 목록과 BE docs/02를 따른다. 변경 요청은 세션 쿠키와 CSRF 헤더를 함께 보낸다.
+         * @description 사전에 있는 기술이면 category 를 보내도 사전 값을 쓴다. 사전에 없는 기술은 그 이름으로 새로 등록하는데, category 를 비워 보내면 etc(기타)가 된다 — 웹에 카테고리를 고르는 칸이 없다 (BE #33). level 을 비우면 1(학습 중)이다. 이미 가진 기술이면 200 으로 그 기술을 돌려준다.
          */
         post: operations["UserSkillController_add"];
         delete?: never;
@@ -775,7 +775,7 @@ export interface paths {
         put?: never;
         /**
          * 프로젝트·사례 — 사용 기술 추가
-         * @description 세부 상태 규칙은 C-02 화면별 API 목록과 BE docs/02를 따른다. 변경 요청은 세션 쿠키와 CSRF 헤더를 함께 보낸다.
+         * @description 프로젝트에 쓸 기술을 추가한다. 사전에 없는 이름이면 기술스택에 학습 중으로 만들어 연결하고, category 를 비워 보내면 etc(기타)로 등록한다 (BE #33).
          */
         post: operations["ProjectController_addSkill"];
         delete?: never;
@@ -813,7 +813,7 @@ export interface paths {
         };
         /**
          * 기술 사전 — 자동완성
-         * @description 세부 상태 규칙은 C-02 화면별 API 목록과 BE docs/02를 따른다. 변경 요청은 세션 쿠키와 CSRF 헤더를 함께 보낸다.
+         * @description 표준 기술 사전 자동완성. query 가 비어 있으면 빈 배열이다 — category 만으로 그 카테고리의 전체 목록을 주지는 않는다 (웹이 카테고리 탭을 없애 쓰지 않는다, BE #33). 사용자가 추가한 기술(user_added)은 공용 사전이 아니라서 결과에 넣지 않는다.
          */
         get: operations["SkillController_autocomplete"];
         put?: never;
@@ -1210,7 +1210,7 @@ export interface components {
             version: number;
         };
         AddUserSkillRequest: {
-            category?: ("language" | "framework" | "database" | "infra" | "tool") | null;
+            category?: ("language" | "framework" | "database" | "infra" | "tool" | "etc") | null;
             level?: number | null;
             /** @description 공백만 입력할 수 없습니다. */
             name: string;
@@ -1221,7 +1221,7 @@ export interface components {
         };
         UserSkillResponse: {
             /** @enum {string} */
-            category: "language" | "framework" | "database" | "infra" | "tool";
+            category: "language" | "framework" | "database" | "infra" | "tool" | "etc";
             /** Format: int64 */
             id: number;
             /** Format: int32 */
@@ -1233,7 +1233,7 @@ export interface components {
         };
         UserSkillView: {
             /** @enum {string} */
-            category: "language" | "framework" | "database" | "infra" | "tool";
+            category: "language" | "framework" | "database" | "infra" | "tool" | "etc";
             /** Format: int64 */
             id: number;
             name: string;
@@ -1271,8 +1271,7 @@ export interface components {
             feedback: string;
         };
         NewSkillRequest: {
-            /** @enum {string} */
-            category: "language" | "framework" | "database" | "infra" | "tool";
+            category?: ("language" | "framework" | "database" | "infra" | "tool" | "etc") | null;
             /** @description 공백만 입력할 수 없습니다. */
             name: string;
         };
@@ -1444,7 +1443,7 @@ export interface components {
         };
         SkillResponse: {
             /** @enum {string} */
-            category: "language" | "framework" | "database" | "infra" | "tool";
+            category: "language" | "framework" | "database" | "infra" | "tool" | "etc";
             /** Format: int64 */
             id: number;
             name: string;
@@ -3096,7 +3095,7 @@ export interface operations {
         parameters: {
             query?: {
                 query?: string;
-                category?: "language" | "framework" | "database" | "infra" | "tool";
+                category?: "language" | "framework" | "database" | "infra" | "tool" | "etc";
             };
             header?: never;
             path?: never;

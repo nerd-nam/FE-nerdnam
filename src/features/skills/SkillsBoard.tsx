@@ -2,9 +2,9 @@
 
 // S02 의 움직이는 부분: 기술 추가 카드 + 추가한 기술 표 + 아래 이전/다음 버튼.
 // "추가한 기술" 목록을 두 카드가 함께 쓰므로(검색 결과 칩의 "추가됨" 표시, 표) 상태를 여기 한곳에 둔다.
-// 카테고리는 보여 주거나 고르게 하지 않는다 (FE 결정 2026-10-27). 저장할 때 검색 결과에 붙어 온 카테고리를 보내기만 한다.
-// 표준 사전에 없는 기술도 검색어 그대로 추가할 수 있다 (FE 결정 2026-10-27). 서버가 표준 이름으로 바꾸거나 새 기술로 등록하고,
-// 그 카테고리는 NEW_SKILL_CATEGORY 로 보낸다. 검색 결과의 "추가됨" 칩을 다시 누르면 목록에서 뺀다.
+// 카테고리는 보여 주지도 보내지도 않는다 (FE 결정 2026-10-27). 사전 기술은 서버가 사전의 카테고리를 쓴다.
+// 표준 사전에 없는 기술도 검색어 그대로 추가할 수 있다 (FE 결정 2026-10-27). 서버가 표준 이름으로 바꾸거나
+// etc(기타) 카테고리의 새 기술로 등록한다 (C-03 v0.1.6). 검색 결과의 "추가됨" 칩을 다시 누르면 목록에서 뺀다.
 //
 // 저장 (FE 결정 2026-10-26): 추가·숙련도·삭제는 화면에서만 바꿔 두고, 화면을 떠날 때(이전·다음·검토로 돌아가기·
 // 머리글 "저장하고 나중에 하기") 서버에 한 번에 보낸다. 마지막으로 저장한 상태(saved)와 지금 목록을 비교해
@@ -28,7 +28,7 @@ import { Icon } from "@/shared/ui/Icon";
 import { Table } from "@/shared/ui/Table";
 import { useFocusAfterRender } from "@/shared/useFocusAfterRender";
 import { OnboardingActions } from "@/features/onboarding/OnboardingActions";
-import { LEVELS, NEW_SKILL_CATEGORY, type CatalogSkill, type Category, type MySkill } from "./skill";
+import { LEVELS, type MySkill } from "./skill";
 import styles from "./Skills.module.css";
 
 // 서버에 마지막으로 저장된 내 기술 (기술 이름 → 서버 번호·카테고리·숙련도)
@@ -55,7 +55,7 @@ export function SkillsBoard({ initialSkills, reviewId }: SkillsBoardProps) {
 
   const [query, setQuery] = useState("");
   // 마지막으로 받은 검색 결과. q 가 지금 검색어와 다르면 아직 찾는 중이다
-  const [search, setSearch] = useState<{ q: string; results: CatalogSkill[] | "error" } | null>(null);
+  const [search, setSearch] = useState<{ q: string; results: string[] | "error" } | null>(null); // 결과 = 표준 기술 이름
 
   const has = (name: string) => skills.some((s) => s.name === name);
   // 직접 입력한 이름은 대소문자만 다른 같은 기술일 수 있어서 대소문자를 무시하고 찾는다
@@ -83,7 +83,7 @@ export function SkillsBoard({ initialSkills, reviewId }: SkillsBoardProps) {
     const timer = setTimeout(() => {
       api.GET("/api/skills", { params: { query: { query: q } } }).then(({ data }) => {
         if (stale) return;
-        setSearch({ q, results: data ? data.map((s) => ({ name: s.name, category: s.category })) : "error" });
+        setSearch({ q, results: data ? data.map((s) => s.name) : "error" });
       });
     }, 300);
     return () => {
@@ -93,9 +93,9 @@ export function SkillsBoard({ initialSkills, reviewId }: SkillsBoardProps) {
   }, [query]);
 
   // 새 기술은 "학습 중"(1)으로 추가한다 (디자인 skills.js 와 같음). 저장 전에 지웠다가 다시 넣으면 원래 상태로 돌아온다
-  function add(name: string, cat: Category) {
+  function add(name: string) {
     if (has(name)) return;
-    setSkills((prev) => [...prev, saved[name] ?? { name, category: cat, level: 1 }]);
+    setSkills((prev) => [...prev, saved[name] ?? { name, level: 1 }]);
   }
 
   // 검색 결과의 "추가됨" 칩으로 뺄 때. 같은 자리의 칩이 "추가" 칩으로 바뀌어 커서는 그대로 남는다
@@ -136,10 +136,10 @@ export function SkillsBoard({ initialSkills, reviewId }: SkillsBoardProps) {
     // 직접 입력한 이름은 서버가 표준 이름으로 바꿔 돌려줄 수 있다(리액트 → React). 화면 이름 → 서버 이름
     const renamed: Record<string, string> = {};
     for (const s of added) {
-      const { data, error } = await api.POST("/api/me/skills", { body: { name: s.name, category: s.category, level: s.level } });
+      const { data, error } = await api.POST("/api/me/skills", { body: { name: s.name, level: s.level } });
       if (data) {
         renamed[s.name] = data.name;
-        next[data.name] = { id: data.id, name: data.name, category: data.category, level: data.level };
+        next[data.name] = { id: data.id, name: data.name, level: data.level };
       } else fail(error);
     }
     for (const s of changed) {
@@ -176,7 +176,7 @@ export function SkillsBoard({ initialSkills, reviewId }: SkillsBoardProps) {
   const searching = q !== "" && search?.q !== q;
   const list = searching || !search ? [] : search.results;
   // 검색어와 이름이 똑같은 결과가 없으면 검색어 그대로 추가하는 칩을 붙인다 (이미 추가했으면 "추가됨")
-  const exact = list !== "error" && list.some((s) => s.name.toLowerCase() === q.toLowerCase());
+  const exact = list !== "error" && list.some((name) => name.toLowerCase() === q.toLowerCase());
   const custom = q && !searching && list !== "error" && !exact ? (findByName(q)?.name ?? q) : null;
 
   // 검색 결과 칩: 추가했으면 "추가됨"(누르면 뺌), 아니면 "추가"
@@ -229,8 +229,8 @@ export function SkillsBoard({ initialSkills, reviewId }: SkillsBoardProps) {
             <>
               {list.length === 0 && <p className={styles.empty}>표준 사전에서 찾지 못했어요. 입력한 이름 그대로 추가할 수 있어요.</p>}
               <div className={styles.row}>
-                {list.map((chip) => resultChip(chip.name, () => add(chip.name, chip.category)))}
-                {custom && resultChip(custom, () => add(custom, NEW_SKILL_CATEGORY), `"${custom}" 직접`)}
+                {list.map((name) => resultChip(name, () => add(name)))}
+                {custom && resultChip(custom, () => add(custom), `"${custom}" 직접`)}
               </div>
             </>
           )}
