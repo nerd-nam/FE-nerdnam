@@ -28,7 +28,8 @@ export function Header(props: HeaderProps) {
       <div className={styles.headerInner}>
         {props.variant === "app" ? (
           <div className={styles.headerLeft}>
-            <Brand />
+            {/* 로그인한 뒤의 로고는 내 경험으로 바로 간다. S01 을 거치면 시작 화면 확인 후 다시 이동해야 한다 (기획서 v1.62) */}
+            <Brand href={routes.library} />
             <nav aria-label="주 메뉴" className={styles.nav}>
               {MENU.map((item) => (
                 <Link key={item.area} href={item.href} aria-current={item.area === props.area ? "page" : undefined}>
@@ -38,7 +39,7 @@ export function Header(props: HeaderProps) {
             </nav>
           </div>
         ) : (
-          <Brand />
+          <Brand href={routes.start} />
         )}
 
         {props.variant === "start" && (
@@ -74,9 +75,9 @@ async function Avatar() {
   return <AccountMenu name={displayName} email={email} />;
 }
 
-function Brand() {
+function Brand({ href }: { href: string }) {
   return (
-    <Link className={styles.brand} href={routes.start}>
+    <Link className={styles.brand} href={href}>
       <span className={styles.brandMark}>
         <Icon name="check" size="sm" bold />
       </span>

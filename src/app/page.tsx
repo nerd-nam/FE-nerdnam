@@ -17,7 +17,7 @@ import { Icon } from "@/shared/ui/Icon";
 // 왼쪽 소개·흐름은 움직이지 않아서 여기(서버)서 그리고, 동의에 따라 버튼이 바뀌는 시작하기 카드만 클라이언트 컴포넌트다.
 // 제목(<h1>)이 디자인처럼 큰 글씨라 공용 PageHead 대신 직접 만든다.
 //
-// 로그인 흐름 (C-02 S01): 소셜 로그인이 끝나면 BE 가 여기(/)로 돌려보낸다. 그래서 열릴 때 서버에서 로그인 상태를 본다(StartGate).
+// 로그인 흐름 (C-02 S01): 소셜 로그인이 끝나면 BE 가 여기(/)로 돌려보낸다. 그래서 열릴 때 서버에서 로그인 상태를 본다(startCard).
 // - 로그인 안 함 → 시작하기 카드 (실패해서 돌아왔으면 /?login=failed → 오류 안내)
 // - 로그인 + 동의 기록 있음 → 갈 화면으로: 로그인이 풀려서 왔던 화면(loginReturn.ts)이 있으면 거기, 없으면 하던 단계 (GET /api/me/onboarding, onboarding.ts)
 // - 로그인 + 동의 기록 없음 → 로그인 마무리(FinishLogin): S01 에서 받은 동의를 기록하거나 약관 동의 화면으로
@@ -29,7 +29,22 @@ const STEPS = [
   { title: "작성 방향 받기", desc: "요건별 근거 경험, 서류 4종의 방향, 포트폴리오 이미지 프롬프트까지.", meta: "약 1분" },
 ];
 
+// 로그인 확인을 먼저 끝낸 뒤 그린다 (기획서 v1.62). 시작 화면을 먼저 보여 주면 로그인한 사용자는 시작 화면이 잠깐 보였다가
+// 하던 화면으로 다시 이동해 깜빡인다. 로그인 쿠키를 읽는 부분은 Suspense 안에 있어야 해서(cacheComponents) 화면 전체를 감싸고,
+// 확인하는 동안은 아무것도 보여 주지 않는다
 export default function StartPage({ searchParams }: PageProps<"/">) {
+  return (
+    <Suspense>
+      <Start searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function Start({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
+  const sp = await searchParams;
+  // 로그인했으면 여기서 다른 화면으로 이동해서 아래는 그리지 않는다
+  const card = await startCard({ loginFailed: sp.login === "failed", next: typeof sp.next === "string" && isSafePath(sp.next) ? sp.next : undefined });
+
   return (
     <>
       <Header variant="start" />
@@ -66,12 +81,7 @@ export default function StartPage({ searchParams }: PageProps<"/">) {
             </p>
           </section>
 
-          {/* 로그인 상태를 묻는 동안은 시작하기 카드를 먼저 보여 준다 */}
-          <Suspense fallback={<StartCard />}>
-            {searchParams.then((sp) => (
-              <StartGate loginFailed={sp.login === "failed"} next={typeof sp.next === "string" && isSafePath(sp.next) ? sp.next : undefined} />
-            ))}
-          </Suspense>
+          {card}
         </div>
       </Page>
       <Footer />
@@ -79,8 +89,9 @@ export default function StartPage({ searchParams }: PageProps<"/">) {
   );
 }
 
+// 로그인 상태에 따라 오른쪽 카드를 고르거나, 로그인했으면 갈 화면으로 보낸다
 // next: 로그인이 풀려서 왔을 때(/?next=…) 돌아갈 화면 (우리 사이트 안 주소만)
-async function StartGate({ loginFailed, next }: { loginFailed: boolean; next?: string }) {
+async function startCard({ loginFailed, next }: { loginFailed: boolean; next?: string }) {
   const api = await serverApi(routes.start, { anonymous: true });
   const me = await api.GET("/api/me");
   if (me.response.status === 401) return <StartCard loginFailed={loginFailed} next={next} />;
