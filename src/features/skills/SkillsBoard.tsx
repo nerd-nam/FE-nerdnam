@@ -71,7 +71,7 @@ export function SkillsBoard({ initialSkills, reviewId }: SkillsBoardProps) {
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
 
-  // 검색창: 입력이 0.2초 멈추면 서버 자동완성에 묻는다. 그 사이 새로 입력하면 앞의 요청 결과는 버린다
+  // 검색창: 입력이 0.3초 멈추면 서버 자동완성에 묻는다. 그 사이 새로 입력하면 앞의 요청 결과는 버린다
   useEffect(() => {
     const q = query.trim();
     if (!q) return;
@@ -81,7 +81,7 @@ export function SkillsBoard({ initialSkills, reviewId }: SkillsBoardProps) {
         if (stale) return;
         setSearch({ q, results: data ? data.map((s) => ({ name: s.name, category: s.category })) : "error" });
       });
-    }, 200);
+    }, 300);
     return () => {
       stale = true;
       clearTimeout(timer);
