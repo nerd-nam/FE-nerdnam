@@ -28,7 +28,7 @@ export function Header(props: HeaderProps) {
       <div className={styles.headerInner}>
         {props.variant === "app" ? (
           <div className={styles.headerLeft}>
-            {/* 로그인한 뒤의 로고는 내 경험으로 바로 간다. S01 을 거치면 시작 화면 확인 후 다시 이동해야 한다 (기획서 v1.62) */}
+            {/* 로그인한 뒤의 로고는 내 경험으로 바로 간다. S01 을 거치면 시작 화면 확인 후 다시 이동해야 한다 (기획서 v1.63) */}
             <Brand href={routes.library} />
             <nav aria-label="주 메뉴" className={styles.nav}>
               {MENU.map((item) => (
