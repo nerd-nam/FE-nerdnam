@@ -10,6 +10,7 @@
 import Link from "next/link";
 import { useEffect, useState, type KeyboardEvent } from "react";
 import { OnboardingActions } from "@/features/onboarding/OnboardingActions";
+import { SkillPicker, type SkillOption } from "@/features/skills/SkillPicker";
 import { api } from "@/shared/api/client";
 import { isProblem, problemMessage } from "@/shared/api/problem";
 import { PageHead } from "@/shared/layout/Page";
@@ -19,7 +20,6 @@ import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
 import { Callout } from "@/shared/ui/Callout";
 import { Card } from "@/shared/ui/Card";
-import { Chip } from "@/shared/ui/Chip";
 import { Dialog } from "@/shared/ui/Dialog";
 import { Field, fieldErrorId, Input, Select } from "@/shared/ui/Field";
 import { Icon } from "@/shared/ui/Icon";
@@ -39,7 +39,6 @@ import {
 } from "./career";
 import styles from "./Career.module.css";
 
-type SkillOption = { id: number; name: string }; // 내 기술스택 (userSkillId, 이름)
 type Selected = number | "new"; // 고른 경력 번호, 또는 새 경력
 
 type CareerBoardProps = {
@@ -50,6 +49,7 @@ type CareerBoardProps = {
 
 export function CareerBoard({ initialCareers, mySkills, reviewId }: CareerBoardProps) {
   const [careers, setCareers] = useState(initialCareers);
+  const [skills, setSkills] = useState(mySkills); // "이 회사에서 쓴 기술" 선택지. 여기서 새로 추가한 기술이 붙는다
   const [selectedId, setSelectedId] = useState<Selected>(initialCareers[0]?.id ?? "new");
   const base = careers.find((c) => c.id === selectedId) ?? emptyCareer(); // 저장된 값 (새 경력이면 빈 양식)
   const [draft, setDraft] = useState(base); // 양식에서 고치는 중인 값
@@ -299,24 +299,18 @@ export function CareerBoard({ initialCareers, mySkills, reviewId }: CareerBoardP
             </Button>
           </fieldset>
 
-          <fieldset className={styles.fieldset}>
-            <legend className={styles.legend}>
-              <span>
-                이 회사에서 쓴 기술 <span className={styles.hint}>· 기술스택에서 선택</span>
-              </span>
-            </legend>
-            <div className={styles.row}>
-              {mySkills.map((s) => {
-                const isOn = draft.skillIds.includes(s.id);
-                return (
-                  <Chip key={s.id} variant="accent" pressed={isOn} onClick={() => toggleSkill(s.id)}>
-                    {isOn && <Icon name="check" size="sm" bold />}
-                    {s.name}
-                  </Chip>
-                );
-              })}
-            </div>
-          </fieldset>
+          <SkillPicker
+            legend="이 회사에서 쓴 기술"
+            options={skills}
+            selected={draft.skillIds}
+            onToggle={toggleSkill}
+            onAdded={(skill) => {
+              setSkills((prev) => (prev.some((s) => s.id === skill.id) ? prev : [...prev, skill]));
+              // 서버를 기다리는 사이 양식이 바뀌었을 수 있어서 지금 값에 더한다
+              setDraft((prev) => (prev.skillIds.includes(skill.id) ? prev : { ...prev, skillIds: [...prev.skillIds, skill.id] }));
+              setSavedNote(false);
+            }}
+          />
 
           {formError && (
             <Callout tone="bad" icon="alert" role="alert">

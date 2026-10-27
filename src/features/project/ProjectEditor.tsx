@@ -28,7 +28,7 @@ import { useSaveOnLeave } from "@/shared/useSaveOnLeave";
 import { DeleteProjectButton } from "./DeleteProjectButton";
 import { EMPTY_DRAFT, sameDraft, toDraft, toRequest, type AffiliationValue, type ProjectDraft } from "./project";
 import { RawTextField } from "./RawTextField";
-import { SkillPicker, type SkillOption } from "./SkillPicker";
+import { SkillPicker, type SkillOption } from "@/features/skills/SkillPicker";
 import styles from "./Project.module.css";
 
 type ProjectEditorProps = {
@@ -172,6 +172,7 @@ export function ProjectEditor({ initial, runningJobId, affiliations, mySkills, g
             </div>
 
             <SkillPicker
+              legend="이 프로젝트에서 쓴 기술"
               options={skills}
               selected={draft.skillIds}
               onToggle={(id) => set("skillIds", draft.skillIds.includes(id) ? draft.skillIds.filter((s) => s !== id) : [...draft.skillIds, id])}

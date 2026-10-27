@@ -23,11 +23,8 @@
 .meta { font-size: 13px; color: var(--subtle); }
 .inlineLink { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; margin-top: 4px; font-size: 13px; font-weight: 600; }
 
-/* 사용 기술 */
+/* 세로로 쌓는 묶음 (양식 fieldset, 안내 카드) */
 .skills { display: flex; flex-direction: column; gap: 10px; }
-.legend { margin-bottom: 4px; font-size: 14px; font-weight: 600; }
-.legendHint { font-weight: 400; color: var(--subtle); }
-.newSkillInput { flex: 1 1 260px; width: auto; }
 
 /* 칸 아래 빨간 오류 (공용 Field 의 오류 문장과 같은 모양) */
 .error { margin-top: 6px; font-size: 13px; color: var(--bad); }
