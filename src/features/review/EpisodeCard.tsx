@@ -28,7 +28,7 @@ type EpisodeCardProps = {
   busy: boolean;
   onToggle: () => void;
   onViewVersion: (version: number) => void;
-  onContinueFrom: (version: number) => void; // "이 버전에서 이어서 하기": 그 버전을 복사해 새 최신 버전으로 (서버 restore)
+  onContinueFrom: (version: number) => void; // "이 버전에서 이어서 하기": 그 버전을 지금 쓰는 버전으로 (서버 restore, 새 버전 없음)
   onAnswer: (key: string, answer: string) => void; // 확인 질문 답변 (AI 가 새 버전을 만든다)
   onDrop: (key: string) => void; // "빼고 진행" (AI 없이 새 버전)
   onConfirm: () => void;
@@ -160,7 +160,7 @@ function EpisodeBody(props: EpisodeCardProps & { bodyId: string }) {
       </div>
 
       {/* 다른 버전을 볼 때: 보기만 하고, "이 버전에서 이어서 하기"를 누르면 이 버전을 지금 쓰는 버전으로 바꾼다 (되돌리기, 기획서 F2).
-          서버(restore)는 아직 이 버전을 복사해 새 버전을 만든다 — 새 버전 없이 바꾸도록 BE 에 요청함 */}
+          서버(restore)는 새 버전을 만들지 않고 지금 쓰는 버전만 바꾼다 (BE-nerdnam #29, C-03 v0.1.5) */}
       {isReviewing && viewingOlder && (
         <div className={styles.olderNote}>
           <span>
