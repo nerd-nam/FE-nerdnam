@@ -48,8 +48,6 @@ jobs:
     permissions:
       id-token: write # OIDC 증명서를 받기 위해
       contents: read
-    outputs:
-      digest: ${{ steps.image.outputs.digest }}
     steps:
       - uses: actions/checkout@v4
       - uses: aws-actions/configure-aws-credentials@v4
@@ -59,14 +57,12 @@ jobs:
       - id: ecr
         uses: aws-actions/amazon-ecr-login@v2
       # ECR 은 같은 태그를 덮어쓸 수 없어서(IMMUTABLE) 커밋마다 다른 커밋 SHA 를 태그로 쓴다.
-      # 배포 정의(INFRA gitops/apps/images.yaml)에는 태그가 아니라 마지막에 출력하는 digest 를 넣는다.
-      - id: image
-        run: |
+      # 이 작업은 ECR 에 올리기까지만 한다. 배포 정의(INFRA)는 고치지 않는다 — 인프라 쪽에서 아래 digest 를 보고 바꾼다 (팀 결정, 2026-10-29).
+      - run: |
           ref="${{ steps.ecr.outputs.registry }}/nerdnam-dev/web:${GITHUB_SHA}"
           docker build --build-arg API_ORIGIN="$API_ORIGIN" -t "$ref" .
           docker push "$ref"
           digest=$(docker inspect --format '{{index .RepoDigests 0}}' "$ref")
-          echo "digest=$digest" >> "$GITHUB_OUTPUT"
           {
             echo "### 올린 이미지"
             echo "- 태그: \`$ref\`"
