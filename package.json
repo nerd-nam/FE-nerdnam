@@ -12,6 +12,10 @@
     "mock:api": "prism mock ../SPEC-nerdnam/contracts/web-api.openapi.yaml --port 4010"
   },
   "dependencies": {
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/instrumentation-http": "^0.223.0",
+    "@opentelemetry/instrumentation-undici": "^0.33.0",
+    "@opentelemetry/sdk-node": "^0.223.0",
     "next": "16.4.2",
     "openapi-fetch": "^0.17.0",
     "react": "19.3.0",
