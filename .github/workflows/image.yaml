@@ -1,0 +1,74 @@
+# main 에 올라갈 때마다 검사(lint·build)를 하고, 통과하면 웹 이미지를 ECR(nerdnam-dev/web)에 올린다 (#9, 인프라 6단계).
+#
+# AWS 로그인: 저장된 키 없이 GitHub OIDC 로 AWS 역할 nerdnam-dev-ci-web 을 잠깐 빌린다.
+#   그 역할은 이 저장소 main 의 작업만 받고, nerdnam-dev/web 에만 올릴 수 있다 (INFRA Terraform 이 만든다).
+#   역할 ARN 은 저장소 설정 → Variables 의 AWS_ROLE_ARN 에 넣는다. 비어 있으면 검사만 하고 올리기는 건너뛴다.
+
+name: 이미지 빌드·ECR push
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # Actions 탭에서 손으로 다시 돌릴 때
+
+# 같은 브랜치에서 겹쳐 돌면 앞의 것이 끝날 때까지 기다린다 (올리는 중간에 끊지 않게)
+concurrency:
+  group: image-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # BE 주소. next.config.ts 의 "대신 전달"(rewrites) 규칙은 빌드할 때 정해지므로 빌드 값으로 꼭 준다 (Dockerfile 참고).
+  # 쿠버네티스 안에서만 통하는 주소다: nerdnam 구역의 api(BE) 서비스 8080번
+  API_ORIGIN: http://api.nerdnam.svc.cluster.local:8080
+
+jobs:
+  check:
+    name: 검사 (lint·build)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24 # Dockerfile 의 node:24-alpine 과 맞춘다
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+
+  push:
+    name: ECR 에 올리기
+    needs: check
+    # OIDC 역할은 main 만 받으므로 main 에서만 돈다. ARN 을 아직 안 넣었으면 건너뛴다.
+    if: github.ref == 'refs/heads/main' && vars.AWS_ROLE_ARN != ''
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # OIDC 증명서를 받기 위해
+      contents: read
+    outputs:
+      digest: ${{ steps.image.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ap-northeast-2
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      # ECR 은 같은 태그를 덮어쓸 수 없어서(IMMUTABLE) 커밋마다 다른 커밋 SHA 를 태그로 쓴다.
+      # 배포 정의(INFRA gitops/apps/images.yaml)에는 태그가 아니라 마지막에 출력하는 digest 를 넣는다.
+      - id: image
+        run: |
+          ref="${{ steps.ecr.outputs.registry }}/nerdnam-dev/web:${GITHUB_SHA}"
+          docker build --build-arg API_ORIGIN="$API_ORIGIN" -t "$ref" .
+          docker push "$ref"
+          digest=$(docker inspect --format '{{index .RepoDigests 0}}' "$ref")
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          {
+            echo "### 올린 이미지"
+            echo "- 태그: \`$ref\`"
+            echo "- digest: \`$digest\`"
+          } >> "$GITHUB_STEP_SUMMARY"
