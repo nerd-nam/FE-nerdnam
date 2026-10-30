@@ -8,6 +8,7 @@ import { WritingGuide } from "@/features/project/WritingGuide";
 import { data, serverApi } from "@/shared/api/server";
 import { dataKey } from "@/shared/dataKey";
 import { Page, PageHead } from "@/shared/layout/Page";
+import { ResetOnNavigate } from "@/shared/layout/ResetOnNavigate";
 import { NEW_PROJECT_ID, routes } from "@/shared/routes";
 import { onboardingSteps } from "@/shared/steps";
 import { Stepper } from "@/shared/ui/Stepper";
@@ -69,16 +70,20 @@ async function ProjectContent({ projectId }: { projectId: string }) {
       {project && project.status !== "draft" ? (
         <ProjectLocked projectId={project.id} title={project.title} status={project.status} />
       ) : (
-        <ProjectEditor
-          // key: 프로젝트가 바뀌면 양식을 새로 만든다 (이전 프로젝트에서 고른 기술·입력한 글이 남지 않게).
-          // 같은 프로젝트라도 다시 왔을 때 서버 값(내용·재구성 작업·소속·기술 선택지)이 바뀌었으면 새로 시작한다 (shared/dataKey)
-          key={dataKey([projectId, initial, runningJobId, affiliations, mySkills])}
-          initial={initial}
-          runningJobId={runningJobId}
-          affiliations={affiliations}
-          mySkills={mySkills}
-          guide={<WritingGuide />}
-        />
+        // 링크로 들어오면 양식을 새로 만든다. 안 그러면 "새 프로젝트"(/projects/new)를 눌렀을 때
+        // 그 주소에서 방금 저장한 프로젝트가 그대로 나온다 (ResetOnNavigate)
+        <ResetOnNavigate>
+          <ProjectEditor
+            // key: 프로젝트가 바뀌면 양식을 새로 만든다 (이전 프로젝트에서 고른 기술·입력한 글이 남지 않게).
+            // 같은 프로젝트라도 다시 왔을 때 서버 값(내용·재구성 작업·소속·기술 선택지)이 바뀌었으면 새로 시작한다 (shared/dataKey)
+            key={dataKey([projectId, initial, runningJobId, affiliations, mySkills])}
+            initial={initial}
+            runningJobId={runningJobId}
+            affiliations={affiliations}
+            mySkills={mySkills}
+            guide={<WritingGuide />}
+          />
+        </ResetOnNavigate>
       )}
     </>
   );

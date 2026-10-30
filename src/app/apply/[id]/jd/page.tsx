@@ -8,6 +8,7 @@ import styles from "@/features/jd/Jd.module.css";
 import { data, serverApi } from "@/shared/api/server";
 import { dataKey } from "@/shared/dataKey";
 import { Page, PageHead } from "@/shared/layout/Page";
+import { ResetOnNavigate } from "@/shared/layout/ResetOnNavigate";
 import { NEW_JD_ID, routes } from "@/shared/routes";
 import { APPLY_STEPS } from "@/shared/steps";
 import { Stepper } from "@/shared/ui/Stepper";
@@ -48,6 +49,11 @@ async function JdContent({ id }: { id: string }) {
     jd = toJdDraft(data(await api.GET("/api/job-postings/{postingId}", { params: { path: { postingId } } }))); // 없는 번호·남의 공고면 404
   }
 
+  // 링크로 들어오면 양식을 새로 만든다. 안 그러면 "새 공고"(/apply/new/jd)를 눌렀을 때 방금 저장한 공고가 나온다 (ResetOnNavigate).
   // key: 다른 공고로 옮겨 가거나, 다시 왔을 때 서버의 공고가 바뀌었으면 양식을 새로 만든다 (S04 와 같은 안전장치, shared/dataKey)
-  return <JdForm key={dataKey([id, jd])} initial={jd} guide={<JdGuide />} />;
+  return (
+    <ResetOnNavigate>
+      <JdForm key={dataKey([id, jd])} initial={jd} guide={<JdGuide />} />
+    </ResetOnNavigate>
+  );
 }
