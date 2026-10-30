@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { SkillsBoard } from "@/features/skills/SkillsBoard";
 import { toMySkill } from "@/features/skills/skill";
 import { data, serverApi } from "@/shared/api/server";
+import { dataKey } from "@/shared/dataKey";
 import { Page, PageHead } from "@/shared/layout/Page";
 import { routes } from "@/shared/routes";
 import { onboardingSteps } from "@/shared/steps";
@@ -34,6 +35,7 @@ export default function SkillsPage({ searchParams }: PageProps<"/skills">) {
 
 async function Skills({ reviewId }: { reviewId?: string }) {
   const api = await serverApi(reviewId ? `${routes.skills}?review=${reviewId}` : routes.skills);
-  const mine = await api.GET("/api/me/skills");
-  return <SkillsBoard initialSkills={data(mine).map(toMySkill)} reviewId={reviewId} />;
+  const skills = data(await api.GET("/api/me/skills")).map(toMySkill);
+  // key: 다시 왔을 때 서버의 내 기술이 바뀌었으면(S03·S04 에서 기술 추가 등) 새 목록으로 다시 시작한다 (shared/dataKey)
+  return <SkillsBoard key={dataKey([skills, reviewId])} initialSkills={skills} reviewId={reviewId} />;
 }

@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { PostingList } from "@/features/apply/PostingList";
 import { toPostingSummary } from "@/features/apply/posting";
 import { data, serverApi } from "@/shared/api/server";
+import { dataKey } from "@/shared/dataKey";
 import { Page, PageHead } from "@/shared/layout/Page";
 import { NEW_JD_ID, routes } from "@/shared/routes";
 import { ButtonLink } from "@/shared/ui/Button";
@@ -36,6 +37,7 @@ export default function ApplyListPage() {
 
 async function Postings() {
   const api = await serverApi(routes.applyList);
-  const postings = data(await api.GET("/api/job-postings"));
-  return <PostingList initialPostings={postings.map(toPostingSummary)} />;
+  const postings = data(await api.GET("/api/job-postings")).map(toPostingSummary);
+  // key: 다시 왔을 때 서버 목록이 바뀌었으면(다른 화면에서 공고를 만들거나 고침) 새 목록으로 다시 시작한다 (shared/dataKey)
+  return <PostingList key={dataKey(postings)} initialPostings={postings} />;
 }

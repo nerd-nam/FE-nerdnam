@@ -6,6 +6,7 @@ import { ProjectLocked } from "@/features/project/ProjectLocked";
 import { ProjectTabs } from "@/features/project/ProjectTabs";
 import { WritingGuide } from "@/features/project/WritingGuide";
 import { data, serverApi } from "@/shared/api/server";
+import { dataKey } from "@/shared/dataKey";
 import { Page, PageHead } from "@/shared/layout/Page";
 import { NEW_PROJECT_ID, routes } from "@/shared/routes";
 import { onboardingSteps } from "@/shared/steps";
@@ -58,6 +59,9 @@ async function ProjectContent({ projectId }: { projectId: string }) {
     ...data(careers).map((c) => ({ value: `career:${c.id}` as const, label: [c.companyName, c.teamName].filter(Boolean).join(" · ") })),
     ...OUTSIDE,
   ];
+  const initial = project ? toDraft(project) : EMPTY_DRAFT;
+  const runningJobId = project?.runningJobId ?? null;
+  const mySkills = data(skills).map((s) => ({ id: s.id, name: s.name }));
 
   return (
     <>
@@ -66,12 +70,13 @@ async function ProjectContent({ projectId }: { projectId: string }) {
         <ProjectLocked projectId={project.id} title={project.title} status={project.status} />
       ) : (
         <ProjectEditor
-          // key: 프로젝트가 바뀌면 양식을 새로 만든다 (이전 프로젝트에서 고른 기술·입력한 글이 남지 않게)
-          key={projectId}
-          initial={project ? toDraft(project) : EMPTY_DRAFT}
-          runningJobId={project?.runningJobId ?? null}
+          // key: 프로젝트가 바뀌면 양식을 새로 만든다 (이전 프로젝트에서 고른 기술·입력한 글이 남지 않게).
+          // 같은 프로젝트라도 다시 왔을 때 서버 값(내용·재구성 작업·소속·기술 선택지)이 바뀌었으면 새로 시작한다 (shared/dataKey)
+          key={dataKey([projectId, initial, runningJobId, affiliations, mySkills])}
+          initial={initial}
+          runningJobId={runningJobId}
           affiliations={affiliations}
-          mySkills={data(skills).map((s) => ({ id: s.id, name: s.name }))}
+          mySkills={mySkills}
           guide={<WritingGuide />}
         />
       )}

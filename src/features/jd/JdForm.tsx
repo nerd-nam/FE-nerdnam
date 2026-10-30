@@ -10,7 +10,7 @@
 // 분석 (확인할 것 5 "S07에서 기다리기"): 저장 → POST /analyses(202 jobId) → 양식을 잠그고 기다렸다가 끝나면 S08 로.
 //   실패하면 이유와 "다시 시도". 서버 검증에 걸리면(400 + violations) 오류를 펼쳐 보여 준다 (서버 규칙 = 화면 규칙, 확인할 것 3)
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { aiFailureMessage, waitForAiJob } from "@/shared/api/aiJob";
 import { api } from "@/shared/api/client";
 import { problemMessage } from "@/shared/api/problem";
@@ -91,6 +91,8 @@ export function JdForm({ initial, guide }: JdFormProps) {
   const [job, setJob] = useState<Job>({ state: "idle" });
   const abortRef = useRef<AbortController | null>(null);
   useEffect(() => () => abortRef.current?.abort(), []); // 화면을 떠나면 기다리기를 멈춘다
+  // 기다리기가 멈추므로 "분석 중" 표시도 끈다. 안 끄면 뒤로 가기로 돌아왔을 때 양식이 잠긴 채 멈춰 있다 (cacheComponents 는 떠난 화면을 숨겨 둔다)
+  useLayoutEffect(() => () => setJob((prev) => (prev.state === "waiting" ? { state: "idle" } : prev)), []);
   const waiting = job.state === "waiting";
 
   // 지금 양식 값 (저장된 값과 비교하거나 저장할 때)

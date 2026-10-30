@@ -6,6 +6,7 @@ import { JdForm } from "@/features/jd/JdForm";
 import { JdGuide } from "@/features/jd/JdGuide";
 import styles from "@/features/jd/Jd.module.css";
 import { data, serverApi } from "@/shared/api/server";
+import { dataKey } from "@/shared/dataKey";
 import { Page, PageHead } from "@/shared/layout/Page";
 import { NEW_JD_ID, routes } from "@/shared/routes";
 import { APPLY_STEPS } from "@/shared/steps";
@@ -47,6 +48,6 @@ async function JdContent({ id }: { id: string }) {
     jd = toJdDraft(data(await api.GET("/api/job-postings/{postingId}", { params: { path: { postingId } } }))); // 없는 번호·남의 공고면 404
   }
 
-  // key: 다른 공고로 옮겨 가면 양식을 새로 만든다 (S04 와 같은 안전장치)
-  return <JdForm key={id} initial={jd} guide={<JdGuide />} />;
+  // key: 다른 공고로 옮겨 가거나, 다시 왔을 때 서버의 공고가 바뀌었으면 양식을 새로 만든다 (S04 와 같은 안전장치, shared/dataKey)
+  return <JdForm key={dataKey([id, jd])} initial={jd} guide={<JdGuide />} />;
 }

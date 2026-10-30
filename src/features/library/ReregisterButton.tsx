@@ -29,6 +29,8 @@ export function ReregisterButton({ projectId, title }: { projectId: string; titl
     const { error } = await api.POST("/api/projects/{projectId}/reopen", { params: { path: { projectId: Number(projectId) } } });
     setPending(false);
     if (error) return setError(problemMessage(error, "수정을 시작하지 못했어요. 잠시 뒤 다시 시도해 주세요."));
+    // 이 화면은 떠나도 숨겨져 남는다(cacheComponents). 확인창을 닫고 가야 뒤로 가기로 돌아왔을 때 열린 채로 있지 않다
+    close();
     router.push(routes.project(projectId));
     router.refresh(); // S04 안내 카드에서 눌렀으면 같은 주소라, 서버에서 다시 그려야 초안 양식이 나온다
   }

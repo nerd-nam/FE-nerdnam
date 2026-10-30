@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { toReviewData } from "@/features/review/review";
 import { ReviewBoard } from "@/features/review/ReviewBoard";
 import { data, serverApi } from "@/shared/api/server";
+import { dataKey } from "@/shared/dataKey";
 import { Header } from "@/shared/layout/Header";
 import { Page } from "@/shared/layout/Page";
 import { routes } from "@/shared/routes";
@@ -53,7 +54,8 @@ async function ReviewContent({ projectId }: { projectId: string }) {
       {readOnly ? <Header variant="app" area="library" /> : <Header variant="onboarding" />}
       <Page tight>
         {!readOnly && <Stepper label="온보딩 단계" steps={onboardingSteps(projectId)} current={3} />}
-        <ReviewBoard initial={initial} rating={myRating} />
+        {/* key: 다시 왔을 때 서버의 검토 화면·평가가 바뀌었으면(AI 작업이 끝남 등) 새 값으로 다시 시작한다 (shared/dataKey) */}
+        <ReviewBoard key={dataKey([initial, myRating])} initial={initial} rating={myRating} />
       </Page>
     </>
   );

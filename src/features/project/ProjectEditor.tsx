@@ -12,7 +12,7 @@
 //   실패하면 이유와 "다시 시도". 새로고침해도 서버가 준 runningJobId 로 이어서 기다린다. 기다리는 동안 양식은 잠근다.
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { aiFailureMessage, waitForAiJob } from "@/shared/api/aiJob";
 import { api } from "@/shared/api/client";
 import { isProblem, problemMessage } from "@/shared/api/problem";
@@ -100,12 +100,18 @@ export function ProjectEditor({ initial, runningJobId, affiliations, mySkills, g
   }
 
   // 새로고침했거나 다시 들어왔는데 재구성이 돌고 있으면 이어서 기다린다
+  const resumedRef = useRef(false);
   useEffect(() => {
-    if (runningJobId !== null && initial.id !== null) wait(runningJobId, initial.id);
+    // 처음 그릴 때만. 숨겨 둔 화면이 뒤로 가기로 다시 보일 때도 effect 가 다시 돌지만(cacheComponents),
+    // 그때 이어서 기다리면 끝나자마자 S05 로 다시 보내 버린다. 다시 보일 때는 서버가 다시 그려 준 값을 따른다 (RefreshOnHistory)
+    if (!resumedRef.current && runningJobId !== null && initial.id !== null) wait(runningJobId, initial.id);
+    resumedRef.current = true;
     return () => abortRef.current?.abort();
-    // 처음 한 번만
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 화면을 떠나면(숨겨지면) 기다리기가 멈추므로 "나누고 있어요" 표시도 끈다. 안 끄면 뒤로 가기로 돌아왔을 때 양식이 잠긴 채 멈춰 있다
+  useLayoutEffect(() => () => setJob((prev) => (prev.state === "waiting" ? { state: "idle" } : prev)), []);
 
   async function restructure() {
     setTried(true);

@@ -46,6 +46,8 @@ export function DeleteProjectButton({ projectId, title, status, onDeleted }: Del
       );
     }
     onDeleted?.();
+    // 이 화면은 떠나도 숨겨져 남는다(cacheComponents). 확인창을 닫고 가야 뒤로 가기로 돌아왔을 때 열린 채로 있지 않다
+    close();
     router.push(routes.library);
   }
 

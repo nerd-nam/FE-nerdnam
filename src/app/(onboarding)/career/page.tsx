@@ -4,6 +4,7 @@ import { CareerBoard } from "@/features/career/CareerBoard";
 import { toCareer } from "@/features/career/career";
 import { LeaveGuard } from "@/features/onboarding/LeaveGuard";
 import { data, serverApi } from "@/shared/api/server";
+import { dataKey } from "@/shared/dataKey";
 import { Page } from "@/shared/layout/Page";
 import { routes } from "@/shared/routes";
 import { onboardingSteps } from "@/shared/steps";
@@ -39,11 +40,15 @@ export default function CareerPage({ searchParams }: PageProps<"/career">) {
 async function Careers({ reviewId }: { reviewId?: string }) {
   const api = await serverApi(reviewId ? `${routes.career}?review=${reviewId}` : routes.career);
   // 두 요청은 서로 기다릴 필요가 없어서 동시에 보낸다
-  const [careers, skills] = await Promise.all([api.GET("/api/me/careers"), api.GET("/api/me/skills")]);
+  const [careerList, skillList] = await Promise.all([api.GET("/api/me/careers"), api.GET("/api/me/skills")]);
+  const careers = data(careerList).map(toCareer);
+  const skills = data(skillList).map((s) => ({ id: s.id, name: s.name }));
   return (
     <CareerBoard
-      initialCareers={data(careers).map(toCareer)}
-      mySkills={data(skills).map((s) => ({ id: s.id, name: s.name }))}
+      // key: 다시 왔을 때 서버의 경력·기술이 바뀌었으면(S02 에서 기술 추가 등) 새 값으로 다시 시작한다 (shared/dataKey)
+      key={dataKey([careers, skills, reviewId])}
+      initialCareers={careers}
+      mySkills={skills}
       reviewId={reviewId}
     />
   );

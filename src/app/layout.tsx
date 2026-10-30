@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans_KR } from "next/font/google";
+import { RefreshOnHistory } from "@/shared/layout/RefreshOnHistory";
 import "./globals.css";
 
 // 디자인 글꼴. 빌드 시 내려받아 우리 서버에서 제공한다(사용자 브라우저가 Google에 직접 요청하지 않음).
@@ -33,7 +34,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ko" className={`${plexSans.variable} ${plexMono.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* 뒤로 가기·앞으로 가기로 돌아온 화면을 서버에서 다시 그린다 */}
+        <RefreshOnHistory />
+      </body>
     </html>
   );
 }
