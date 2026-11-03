@@ -29,9 +29,10 @@ export async function waitForAiJob(jobId: number, signal: AbortSignal): Promise<
 
 const FAILED = { status: "failed", failureCode: "internal" } as AiJob;
 
-// 실패 이유별 안내. gpu_unavailable 은 AI 서버를 쓸 수 없거나(HTTP 경로) 요청이 몰려 큐에 넣지 못한 것(큐 경로, ADR-0009)
+// 실패 이유별 안내. gpu_unavailable 은 AI 서버에 닿지 못했거나(HTTP 경로) 큐에 넣지 못한 것(XADD 실패, ADR-0009).
+// 요청이 몰려 큐가 가득 차면 작업이 생기지 않고 시작 요청이 503 AI_UNAVAILABLE 로 온다 → 서버 문장(problemMessage)을 보여 준다
 const FAILURE_MESSAGE: Record<FailureCode, string> = {
-  gpu_unavailable: "지금 AI 요청이 몰려 있어 받지 못했어요. 잠시 뒤 다시 시도해 주세요.",
+  gpu_unavailable: "AI 서버에 잠시 연결하지 못했어요. 잠시 뒤 다시 시도해 주세요.",
   timeout: "AI 응답이 너무 오래 걸렸어요. 잠시 뒤 다시 시도해 주세요.",
   ai_error: "AI가 이번 요청을 처리하지 못했어요. 잠시 뒤 다시 시도해 주세요.",
   internal: "처리 중에 문제가 생겼어요. 잠시 뒤 다시 시도해 주세요.",
