@@ -6,7 +6,7 @@ import { RETURN_COOKIE } from "@/features/start/loginReturn";
 import { nextStepPath } from "@/features/start/onboarding";
 import { StartCard } from "@/features/start/StartCard";
 import styles from "@/features/start/Start.module.css";
-import { data, serverApi } from "@/shared/api/server";
+import { data, hasSession, serverApi } from "@/shared/api/server";
 import { Footer } from "@/shared/layout/Footer";
 import { Header } from "@/shared/layout/Header";
 import { Page } from "@/shared/layout/Page";
@@ -92,6 +92,7 @@ async function Start({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
 // 로그인 상태에 따라 오른쪽 카드를 고르거나, 로그인했으면 갈 화면으로 보낸다
 // next: 로그인이 풀려서 왔을 때(/?next=…) 돌아갈 화면 (우리 사이트 안 주소만)
 async function startCard({ loginFailed, next }: { loginFailed: boolean; next?: string }) {
+  if (!(await hasSession())) return <StartCard loginFailed={loginFailed} next={next} />;
   const api = await serverApi(routes.start, { anonymous: true });
   const me = await api.GET("/api/me");
   if (me.response.status === 401) return <StartCard loginFailed={loginFailed} next={next} />;

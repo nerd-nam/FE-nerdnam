@@ -24,7 +24,9 @@ export async function serverApi(currentPath: string, { anonymous = false } = {})
   await connection();
   // 서버에는 사용자의 브라우저 쿠키가 없다. 들어온 요청의 쿠키(SESSION)를 BE 요청에 그대로 옮겨 붙인다
   const cookie = (await cookies()).toString();
-  const api = createClient<paths>({ baseUrl: API_ORIGIN, headers: { cookie } });
+  // Accept 를 JSON 으로 밝힌다. 없으면(*/*) BE 가 로그인 안 된 GET 을 "로그인 뒤 돌아갈 요청"으로 세션에 저장해
+  // 요청마다 Redis 에 7일짜리 빈 세션이 쌓인다 (NerdnamRedisMemoryHigh)
+  const api = createClient<paths>({ baseUrl: API_ORIGIN, headers: { cookie, accept: "application/json" } });
 
   api.use({
     async onResponse({ response }) {
@@ -38,6 +40,12 @@ export async function serverApi(currentPath: string, { anonymous = false } = {})
     },
   });
   return api;
+}
+
+// 로그인 쿠키(SESSION, BE 의 Spring Session 이 붙인다)가 있는지. 없으면 로그인 안 한 것이 확실하니
+// BE 에 묻지 않는다 — 로그인 안 한 방문자·봇이 화면을 열 때마다 BE 를 부르지 않게
+export async function hasSession() {
+  return (await cookies()).has("SESSION");
 }
 
 // 응답에서 데이터만 꺼낸다. 없는 자료·남의 자료(404)면 404 화면, 그 밖의 오류는 던져서 화면이 오류를 보이게 한다

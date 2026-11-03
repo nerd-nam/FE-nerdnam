@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { data, serverApi } from "@/shared/api/server";
+import { data, hasSession, serverApi } from "@/shared/api/server";
 import { Icon } from "@/shared/ui/Icon";
 import { routes } from "@/shared/routes";
 import { cx } from "@/shared/ui/cx";
@@ -68,6 +68,7 @@ export function Header(props: HeaderProps) {
 async function Avatar() {
   // 머리글은 지금 화면 주소를 모른다. 로그인이 풀렸으면(401) 여기서 S01 로 보내지 않고 빈 동그라미만 두고,
   // 화면 쪽 요청이 "다시 로그인하면 이 화면으로" 주소를 붙여 S01 로 보낸다. 내 정보 조회는 약관 동의 전에도 된다
+  if (!(await hasSession())) return <span className={styles.avatar} aria-hidden="true" />;
   const api = await serverApi(routes.library, { anonymous: true });
   const me = await api.GET("/api/me");
   if (me.response.status === 401) return <span className={styles.avatar} aria-hidden="true" />;
