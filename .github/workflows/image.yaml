@@ -48,6 +48,8 @@ jobs:
     permissions:
       id-token: write # OIDC 증명서를 받기 위해
       contents: read
+    outputs:
+      image: ${{ steps.build.outputs.image }} # <registry>/nerdnam-dev/web@sha256:… (INFRA 배포 PR 에 넘긴다)
     steps:
       - uses: actions/checkout@v4
       - uses: aws-actions/configure-aws-credentials@v4
@@ -57,14 +59,32 @@ jobs:
       - id: ecr
         uses: aws-actions/amazon-ecr-login@v2
       # ECR 은 같은 태그를 덮어쓸 수 없어서(IMMUTABLE) 커밋마다 다른 커밋 SHA 를 태그로 쓴다.
-      # 이 작업은 ECR 에 올리기까지만 한다. 배포 정의(INFRA)는 고치지 않는다 — 인프라 쪽에서 아래 digest 를 보고 바꾼다 (팀 결정, 2026-10-29).
-      - run: |
+      # 올린 digest 로 아래 infra-pr job 이 INFRA 배포 PR 을 연다 (팀 결정 변경 2026-11-03, INFRA docs/이미지-배포-PR.md).
+      - id: build
+        run: |
           ref="${{ steps.ecr.outputs.registry }}/nerdnam-dev/web:${GITHUB_SHA}"
           docker build --build-arg API_ORIGIN="$API_ORIGIN" -t "$ref" .
           docker push "$ref"
           digest=$(docker inspect --format '{{index .RepoDigests 0}}' "$ref")
+          echo "image=$digest" >> "$GITHUB_OUTPUT"
           {
             echo "### 올린 이미지"
             echo "- 태그: \`$ref\`"
             echo "- digest: \`$digest\`"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  # ECR 에 올린 이미지로 INFRA gitops/apps/images.yaml 을 고치는 PR 을 연다(브랜치 deploy/web). merge·배포(Argo sync)는 사람이 한다.
+  # 코드는 INFRA 에 있다: .github/workflows/image-pr.yml, docs/이미지-배포-PR.md. 조직 변수 INFRA_PR_APP_ID 가 없으면 건너뛴다.
+  infra-pr:
+    name: INFRA 배포 PR
+    needs: push
+    if: needs.push.outputs.image != '' && vars.INFRA_PR_APP_ID != ''
+    permissions:
+      contents: read
+    uses: nerd-nam/INFRA-nerdnam/.github/workflows/image-pr.yml@main
+    with:
+      app: web
+      image: ${{ needs.push.outputs.image }}
+      app_id: ${{ vars.INFRA_PR_APP_ID }}
+    secrets:
+      app_private_key: ${{ secrets.INFRA_PR_APP_PRIVATE_KEY }}
